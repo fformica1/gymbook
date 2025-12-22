@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="GymBook">
+    <link rel="apple-touch-icon" href="icon.png">
+    <link rel="manifest" href="manifest.json">
+    <title>Allenamento - GymBook</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Blocco unico fisso in alto -->
+    <header class="workout-sticky-header">
+        <!-- Parte superiore: Nome Routine, Tempo Allenamento, Tasto Fine Allenamento -->
+        <div class="workout-header"> 
+            <div class="content-wrapper">
+                <h1 class="routine-title">[Nome Routine]</h1>
+                <div class="workout-info">
+                    <span class="workout-timer">00:00:00</span>
+                    <button class="btn-end-workout btn-elimina">FINE</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Parte inferiore: Sezione Timer di Recupero -->
+        <div class="recovery-timer">
+            <div class="content-wrapper">
+                <span class="timer-display">00:00</span>
+                <div class="timer-controls">
+                    <button class="btn-timer-adjust btn-grigio" data-adjust="-15">-15s</button>
+                    <button class="btn-timer-adjust btn-grigio" data-adjust="+15">+15s</button>
+                    <button class="btn-timer-skip btn-blu">Salta</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Contenuto principale scrollabile (con gli esercizi) -->
+    <section id="lista-esercizi-allenamento" class="main-content-scrollable">
+        <div class="content-wrapper">
+            <!-- Gli esercizi della routine verranno caricati qui dinamicamente -->
+        </div>
+    </section>
+
+    <!-- Nuovo container per le impostazioni -->
+    <section class="workout-settings-container">
+        <div class="content-wrapper">
+            <div class="setting-row">
+                <label for="update-routine-toggle">Aggiorna i valori della routine</label>
+                <label class="switch">
+                    <input type="checkbox" id="update-routine-toggle">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+        </div>
+    </section>
+
+    <script src="app.js"></script>
+</body>
+</html>

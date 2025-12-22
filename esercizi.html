@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="GymBook">
+    <link rel="apple-touch-icon" href="icon.png">
+    <link rel="manifest" href="manifest.json">
+    <title>Esercizi - GymBook</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    
+    <div class="content-wrapper">
+        <h1>Gestione Esercizi</h1>
+
+        <section>
+            <h2>Crea Nuovo Esercizio</h2>
+            <form id="form-crea-esercizio">
+                <label for="nome-esercizio">Nome Esercizio:</label>
+                <input type="text" id="nome-esercizio" name="nome-esercizio" placeholder="Es: Panca Piana">
+
+                <label for="gruppo-muscolare">Gruppo Muscolare:</label>
+                <select id="gruppo-muscolare" name="gruppo-muscolare">
+                    <option value="bicipiti">Bicipiti</option>
+                    <option value="core">Core</option>
+                    <option value="dorso">Dorso</option>
+                    <option value="femorali">Femorali</option>
+                    <option value="petto">Petto</option>
+                    <option value="polpacci">Polpacci</option>
+                    <option value="quadricipiti">Quadricipiti</option>
+                    <option value="spalle">Spalle</option>
+                    <option value="tricipiti">Tricipiti</option>
+                </select>
+                <button type="submit">Crea Esercizio</button>
+            </form>
+        </section>
+
+        <hr>
+
+        <section>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h2 style="margin: 0;">Elenco Esercizi</h2>
+                <div class="filter-wrapper">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 28px; height: 28px; display: block;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 0 1-.659 1.591l-5.432 5.432a2.25 2.25 0 0 0-.659 1.591v2.927a2.25 2.25 0 0 1-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 0 0-.659-1.591L3.659 7.409A2.25 2.25 0 0 1 3 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0 1 12 3Z" />
+                    </svg>
+                    <select id="filter-gruppo">
+                        <option value="">Tutti i gruppi</option>
+                        <option value="bicipiti">Bicipiti</option>
+                        <option value="core">Core</option>
+                        <option value="dorso">Dorso</option>
+                        <option value="femorali">Femorali</option>
+                        <option value="petto">Petto</option>
+                        <option value="polpacci">Polpacci</option>
+                        <option value="quadricipiti">Quadricipiti</option>
+                        <option value="spalle">Spalle</option>
+                        <option value="tricipiti">Tricipiti</option>
+                    </select>
+                </div>
+            </div>
+            <div id="lista-esercizi"></div>
+
+            <!-- Modal per modifica esercizio -->
+            <div id="edit-exercise-modal" class="modal">
+                <div class="modal-content">
+                    <span class="close-modal">&times;</span>
+                    <h3>Modifica Esercizio</h3>
+                    <form id="form-modifica-esercizio">
+                        <input type="hidden" id="edit-esercizio-id">
+                        <label for="edit-nome-esercizio">Nome Esercizio:</label>
+                        <input type="text" id="edit-nome-esercizio" required>
+
+                        <label for="edit-gruppo-muscolare">Gruppo Muscolare:</label>
+                        <select id="edit-gruppo-muscolare">
+                            <option value="bicipiti">Bicipiti</option>
+                            <option value="core">Core</option>
+                            <option value="dorso">Dorso</option>
+                            <option value="femorali">Femorali</option>
+                            <option value="petto">Petto</option>
+                            <option value="polpacci">Polpacci</option>
+                            <option value="quadricipiti">Quadricipiti</option>
+                            <option value="spalle">Spalle</option>
+                            <option value="tricipiti">Tricipiti</option>
+                        </select>
+                        <div class="modal-actions">
+                            <button type="submit" class="btn-primary">Salva Modifiche</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="index.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h7.5" /></svg>
+            <span>Home</span>
+        </a>
+        <a href="piani.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0h18M12 12.75h.008v.008H12v-.008Z" /></svg>
+            <span>Piani</span>
+        </a>
+        <a href="esercizi.html" class="nav-item active">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h7.5M8.25 12h7.5m-7.5 5.25h7.5M3.75 6.75h.007v.008H3.75V6.75Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0ZM3.75 12h.007v.008H3.75V12Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm-.375 5.25h.007v.008H3.75v-.008Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" /></svg>
+            <span>Esercizi</span>
+        </a>
+    </nav>
+    <script src="app.js"></script>
+</body>
+</html>

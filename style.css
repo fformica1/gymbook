@@ -74,7 +74,7 @@ header h1 span { color: var(--accent); }
     font-size: 20px;
     width: 100%;
     margin-bottom: 20px;
-    padding: 10px 0;
+    padding: 20px 0;
 }
 
 .stats-grid {
@@ -419,7 +419,7 @@ input[type="number"].recovery-input {
 /* Applichiamo il padding solo agli elementi nella pagina di allenamento, non nel banner */
 .workout-sticky-header > .workout-header,
 .workout-sticky-header > .recovery-timer {
-    padding: 15px 0; /* Aumentato il padding per ingrandire la sezione */
+    padding: 15px 0; /* Ridotto il padding */
     transition: background-color 0.3s ease; /* Transizione per il cambio colore */
 }
 

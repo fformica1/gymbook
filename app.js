@@ -46,6 +46,24 @@ document.addEventListener('DOMContentLoaded', () => {
     // Applica il tema salvato all'avvio
     applyTheme();
 
+    // --- FIX CSS: Colore righe completate (tema chiaro) ---
+    // Inietta una regola CSS per garantire che le righe completate siano verdi
+    // anche sulle righe pari (che spesso hanno un background alternato che sovrascrive il colore).
+    const styleFix = document.createElement('style');
+    styleFix.innerHTML = `
+        [data-theme="light"] .set-row.completed {
+            background-color: rgba(40, 167, 69, 0.25) !important;
+        }
+
+        /* FIX: Leggibilità Timer Recupero (Tema Scuro) */
+        [data-theme="dark"] .recovery-timer .timer-display,
+        [data-theme="dark"] .recovery-timer .btn-timer-adjust,
+        [data-theme="dark"] .recovery-timer button {
+            color: #ffffff !important;
+        }
+    `;
+    document.head.appendChild(styleFix);
+
     // Inizializza la logica specifica per ogni pagina
     switch (currentPage) {
         case 'home':
@@ -147,6 +165,16 @@ function setupHomePage() {
     const routineListHomeEl = document.querySelector('#routine-list-home');
     
     renderHomePage();
+
+    // Aggiungi listener per l'evento pageshow per gestire il ripristino dalla cache (bfcache)
+    // Questo assicura che il banner dell'allenamento attivo venga mostrato/nascosto correttamente
+    // quando si torna alla home page usando il pulsante "indietro" del browser.
+    window.addEventListener('pageshow', (event) => {
+        if (event.persisted) {
+            console.log("Pagina ripristinata dalla cache (pageshow). Rirenderizzo la Home.");
+            renderHomePage();
+        }
+    });
 
     function renderHomePage() {
         const activePianoId = getFromLocalStorage('activePianoId');
@@ -284,6 +312,128 @@ function setupHomePage() {
                 }
             }, { offset: Number.NEGATIVE_INFINITY }).element;
         }
+
+        // --- Logica per il banner dell'allenamento in corso ---
+        const activeWorkout = getFromLocalStorage('activeWorkout');
+        const workoutBanner = document.querySelector('#active-workout-banner');
+
+        if (activeWorkout && workoutBanner) {
+            const { pianoId, routineId } = activeWorkout;
+            const piani = getFromLocalStorage('pianiDiAllenamento') || [];
+            const piano = piani.find(p => p.id === pianoId);
+            const routine = piano?.routine.find(r => r.id === routineId);
+
+            if (routine) {
+                // Popola e mostra il banner
+                workoutBanner.style.display = 'block';
+                document.body.style.paddingBottom = `${workoutBanner.offsetHeight + 100}px`; // Aggiunge padding per banner + nav
+
+                workoutBanner.querySelector('.routine-title').textContent = routine.nome;
+                const bannerTimerEl = workoutBanner.querySelector('.workout-timer');
+                const bannerLink = workoutBanner.querySelector('.workout-banner-link');
+                
+                // Costruisci il link corretto per tornare all'allenamento
+                bannerLink.href = `allenamento.html?pianoId=${pianoId}&routineId=${routineId}`;
+
+                // Avvia il timer nel banner
+                const startTime = getFromLocalStorage('workoutStartTime');
+                if (startTime) {
+                    // Evita di creare intervalli multipli se la funzione viene chiamata più volte
+                    if (window.bannerWorkoutTimer) {
+                        clearInterval(window.bannerWorkoutTimer);
+                    }
+
+                    const updateBannerTimer = () => {
+                        const currentTime = Date.now();
+                        const totalSeconds = Math.floor((currentTime - startTime) / 1000);
+
+                        let hours = Math.floor(totalSeconds / 3600);
+                        let minutes = Math.floor((totalSeconds % 3600) / 60);
+
+                        hours = String(hours).padStart(2, '0');
+                        minutes = String(minutes).padStart(2, '0');
+
+                        if (bannerTimerEl) {
+                            bannerTimerEl.textContent = `${hours}:${minutes}`;
+                        }
+                    };
+
+                    updateBannerTimer(); // Aggiorna subito senza aspettare 1 secondo
+                    window.bannerWorkoutTimer = setInterval(updateBannerTimer, 1000);
+                }
+
+                // --- Logica per il TIMER DI RECUPERO nel banner ---
+                const recoveryContainer = workoutBanner.querySelector('.recovery-timer');
+                const recoveryDisplay = recoveryContainer.querySelector('.timer-display');
+
+                const updateRecoveryBanner = () => {
+                    const recoveryEndTime = getFromLocalStorage('recoveryEndTime');
+                    if (recoveryEndTime) {                    
+                        const remainingMs = recoveryEndTime - Date.now();
+
+                        if (remainingMs > 0) {
+                            const remainingSeconds = Math.round(remainingMs / 1000);
+                            const minutes = String(Math.floor(remainingSeconds / 60)).padStart(2, '0');
+                            const seconds = String(remainingSeconds % 60).padStart(2, '0');
+                            recoveryDisplay.textContent = `${minutes}:${seconds}`;                        
+                            recoveryContainer.classList.remove('timer-finished');
+                        } else {
+                            recoveryDisplay.textContent = '00:00';
+                            recoveryContainer.classList.add('timer-finished');
+                            // Controlla se il timer è appena scaduto (e non era già scaduto)
+                            const wasAlreadyFinished = getFromLocalStorage('recoverySoundPlayed');
+                            if (!wasAlreadyFinished) {
+                                playNotificationSound();
+                                saveToLocalStorage('recoverySoundPlayed', true);
+                            }
+                        }
+                    } else {
+                        recoveryDisplay.textContent = '00:00';
+                        recoveryContainer.classList.remove('timer-finished');
+                    }
+                };
+
+                // Avvia un intervallo per aggiornare il timer di recupero nel banner
+                if (window.bannerRecoveryTimer) clearInterval(window.bannerRecoveryTimer);
+                window.bannerRecoveryTimer = setInterval(updateRecoveryBanner, 500);
+                updateRecoveryBanner(); // Chiamata iniziale
+
+                // Aggiungi listener ai pulsanti del timer del banner
+                recoveryContainer.querySelectorAll('button').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.preventDefault(); // Impedisce al link di essere seguito
+                        e.stopPropagation(); // Ferma la propagazione per non attivare il link del banner
+
+                        const adjustment = e.target.dataset.adjust;
+                        if (adjustment) {
+                            const adjustmentMs = parseInt(adjustment, 10) * 1000;
+                            let recoveryEndTime = getFromLocalStorage('recoveryEndTime') || Date.now();
+                            // Se il timer è già scaduto, lo riavvia dal tempo aggiunto
+                            if (recoveryEndTime < Date.now()) recoveryEndTime = Date.now();
+                            
+                            recoveryEndTime += adjustmentMs;
+                            saveToLocalStorage('recoveryEndTime', recoveryEndTime);
+                        } else if (e.target.classList.contains('btn-timer-skip')) {
+                            localStorage.removeItem('recoveryEndTime');
+                            // Quando si salta, si ferma anche il suono/vibrazione se attivo
+                            recoveryContainer.classList.remove('timer-finished');
+                        }
+                        localStorage.removeItem('recoverySoundPlayed'); // Resetta il flag del suono
+                        updateRecoveryBanner(); // Aggiorna subito la UI
+                    });
+                });
+
+
+            } else {
+                // Se la routine non viene trovata, nascondi il banner
+                workoutBanner.style.display = 'none';
+                document.body.style.paddingBottom = ''; // Ripristina il padding CSS
+            }
+        } else if (workoutBanner) {
+            // Nascondi il banner se non ci sono allenamenti attivi
+            workoutBanner.style.display = 'none';
+            document.body.style.paddingBottom = ''; // Ripristina il padding CSS
+        }
     }
 
     // Aggiungi un listener per impedire l'avvio di una nuova routine se una è già attiva
@@ -297,124 +447,6 @@ function setupHomePage() {
         }
         // Se non ci sono allenamenti attivi, il link funzionerà normalmente
     });
-
-    // Logica per il banner dell'allenamento in corso
-    const activeWorkout = getFromLocalStorage('activeWorkout');
-    const workoutBanner = document.querySelector('#active-workout-banner');
-
-    if (activeWorkout && workoutBanner) {
-        const { pianoId, routineId } = activeWorkout;
-        const piani = getFromLocalStorage('pianiDiAllenamento') || [];
-        const piano = piani.find(p => p.id === pianoId);
-        const routine = piano?.routine.find(r => r.id === routineId);
-
-        if (routine) {
-            // Popola e mostra il banner
-            workoutBanner.style.display = 'block';
-            document.body.style.paddingBottom = `${workoutBanner.offsetHeight + 100}px`; // Aggiunge padding per banner + nav
-
-            workoutBanner.querySelector('.routine-title').textContent = routine.nome;
-            const bannerTimerEl = workoutBanner.querySelector('.workout-timer');
-            const bannerLink = workoutBanner.querySelector('.workout-banner-link');
-            
-            // Costruisci il link corretto per tornare all'allenamento
-            bannerLink.href = `allenamento.html?pianoId=${pianoId}&routineId=${routineId}`;
-
-            // Avvia il timer nel banner
-            const startTime = getFromLocalStorage('workoutStartTime');
-            if (startTime) {
-                // Evita di creare intervalli multipli se la funzione viene chiamata più volte
-                if (window.bannerWorkoutTimer) {
-                    clearInterval(window.bannerWorkoutTimer);
-                }
-
-                const updateBannerTimer = () => {
-                    const currentTime = Date.now();
-                    const totalSeconds = Math.floor((currentTime - startTime) / 1000);
-
-                    let hours = Math.floor(totalSeconds / 3600);
-                    let minutes = Math.floor((totalSeconds % 3600) / 60);
-
-                    hours = String(hours).padStart(2, '0');
-                    minutes = String(minutes).padStart(2, '0');
-
-                    if (bannerTimerEl) {
-                        bannerTimerEl.textContent = `${hours}:${minutes}`;
-                    }
-                };
-
-                updateBannerTimer(); // Aggiorna subito senza aspettare 1 secondo
-                window.bannerWorkoutTimer = setInterval(updateBannerTimer, 1000);
-            }
-
-            // --- Logica per il TIMER DI RECUPERO nel banner ---
-            const recoveryContainer = workoutBanner.querySelector('.recovery-timer');
-            const recoveryDisplay = recoveryContainer.querySelector('.timer-display');
-
-            const updateRecoveryBanner = () => {
-                const recoveryEndTime = getFromLocalStorage('recoveryEndTime');
-                if (recoveryEndTime) {                    
-                    const remainingMs = recoveryEndTime - Date.now();
-
-                    if (remainingMs > 0) {
-                        const remainingSeconds = Math.round(remainingMs / 1000);
-                        const minutes = String(Math.floor(remainingSeconds / 60)).padStart(2, '0');
-                        const seconds = String(remainingSeconds % 60).padStart(2, '0');
-                        recoveryDisplay.textContent = `${minutes}:${seconds}`;                        
-                        recoveryContainer.classList.remove('timer-finished');
-                    } else {
-                        recoveryDisplay.textContent = '00:00';
-                        recoveryContainer.classList.add('timer-finished');
-                        // Controlla se il timer è appena scaduto (e non era già scaduto)
-                        const wasAlreadyFinished = getFromLocalStorage('recoverySoundPlayed');
-                        if (!wasAlreadyFinished) {
-                            playNotificationSound();
-                            saveToLocalStorage('recoverySoundPlayed', true);
-                        }
-                    }
-                } else {
-                    recoveryDisplay.textContent = '00:00';
-                    recoveryContainer.classList.remove('timer-finished');
-                }
-            };
-
-            // Avvia un intervallo per aggiornare il timer di recupero nel banner
-            if (window.bannerRecoveryTimer) clearInterval(window.bannerRecoveryTimer);
-            window.bannerRecoveryTimer = setInterval(updateRecoveryBanner, 500);
-            updateRecoveryBanner(); // Chiamata iniziale
-
-            // Aggiungi listener ai pulsanti del timer del banner
-            recoveryContainer.querySelectorAll('button').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.preventDefault(); // Impedisce al link di essere seguito
-                    e.stopPropagation(); // Ferma la propagazione per non attivare il link del banner
-
-                    const adjustment = e.target.dataset.adjust;
-                    if (adjustment) {
-                        const adjustmentMs = parseInt(adjustment, 10) * 1000;
-                        let recoveryEndTime = getFromLocalStorage('recoveryEndTime') || Date.now();
-                        // Se il timer è già scaduto, lo riavvia dal tempo aggiunto
-                        if (recoveryEndTime < Date.now()) recoveryEndTime = Date.now();
-                        
-                        recoveryEndTime += adjustmentMs;
-                        saveToLocalStorage('recoveryEndTime', recoveryEndTime);
-                    } else if (e.target.classList.contains('btn-timer-skip')) {
-                        localStorage.removeItem('recoveryEndTime');
-                        // Quando si salta, si ferma anche il suono/vibrazione se attivo
-                        recoveryContainer.classList.remove('timer-finished');
-                    }
-                    localStorage.removeItem('recoverySoundPlayed'); // Resetta il flag del suono
-                    updateRecoveryBanner(); // Aggiorna subito la UI
-                });
-            });
-
-
-        } else {
-            // Se la routine non viene trovata, nascondi il banner
-            workoutBanner.style.display = 'none';
-            document.body.style.paddingBottom = ''; // Ripristina il padding CSS
-        }
-    }
 }
 
 function setupPianiPage() {
@@ -824,13 +856,13 @@ function setupAllenamentoPage() {
             const isChecked = s.completed ? 'checked' : '';
             const rowClass = s.completed ? 'set-row completed' : 'set-row';
             return `
-                <div class="set-row">
+                <div class="${rowClass}">
                     <span class="set-number">${index + 1}</span>
                     <span class="set-previous">${prevData}</span>
                     <div class="set-inputs">
                         <div class="adjust-control">
                             <button class="btn-weight-adjust" data-adjust="-2.5">-</button>
-                            <input type="number" class="set-input weight-input" value="${s.kg}" inputmode="numeric">
+                        <input type="number" class="set-input weight-input" value="${s.kg}" inputmode="decimal" step="any">
                             <button class="btn-weight-adjust" data-adjust="2.5">+</button>
                         </div>
                         <div class="adjust-control">
@@ -894,7 +926,7 @@ function setupAllenamentoPage() {
                 <div class="set-inputs">
                     <div class="adjust-control">
                         <button class="btn-weight-adjust" data-adjust="-2.5">-</button>
-                        <input type="number" class="set-input weight-input" value="${kgValue}" inputmode="numeric">
+                    <input type="number" class="set-input weight-input" value="${kgValue}" inputmode="decimal" step="any">
                         <button class="btn-weight-adjust" data-adjust="2.5">+</button>
                     </div>
                     <div class="adjust-control">
@@ -956,6 +988,17 @@ function setupAllenamentoPage() {
             e.target.value = e.target.dataset.originalValue || '';
         }
     });
+
+    // --- Logica per il salvataggio automatico su input (NOTE, RECUPERO, KG, REPS) ---
+    container.addEventListener('input', (e) => {
+        // Salva lo stato quando si modifica un input di peso/reps, le note o il tempo di recupero
+        if (e.target.classList.contains('set-input') ||
+            e.target.tagName === 'TEXTAREA' ||
+            e.target.classList.contains('recovery-input')) {
+            saveCurrentWorkoutState();
+        }
+    });
+
 
     // --- Logica per i checkbox delle serie (usando event delegation) ---
     container.addEventListener('change', (e) => {
@@ -1126,6 +1169,7 @@ function setupAllenamentoPage() {
             const esercizioId = card.dataset.esercizioId;
             const esercizioOriginale = routine.esercizi.find(e => e.id === esercizioId);
             const serieCompletate = [];
+            const noteAllenamento = card.querySelector('textarea').value;
 
             card.querySelectorAll('.set-row').forEach(riga => {
                 const inputs = riga.querySelectorAll('input[type="number"]');
@@ -1137,8 +1181,10 @@ function setupAllenamentoPage() {
 
             workoutLog.esercizi.push({
                 esercizioId: esercizioOriginale.esercizioId, // ID globale dell'esercizio
+                instanceId: esercizioId, // ID univoco dell'istanza nella routine (FONDAMENTALE per l'aggiornamento)
                 nome: esercizioOriginale.nome,
-                serie: serieCompletate
+                serie: serieCompletate,
+                note: noteAllenamento
             });
         });
 
@@ -1147,20 +1193,29 @@ function setupAllenamentoPage() {
         storicoCompleto.unshift(workoutLog);
         saveToLocalStorage('storicoAllenamenti', storicoCompleto);
 
-        // 3. Chiedi all'utente se vuole aggiornare la routine
-        if (updateRoutineToggle.checked) {
-            let pianiDaAggiornare = getFromLocalStorage('pianiDiAllenamento');
-            const pianoDaAggiornare = pianiDaAggiornare.find(p => p.id === pianoId);
-            const routineDaAggiornare = pianoDaAggiornare.routine.find(r => r.id === routineId);
+        // 3. Aggiorna la routine di base (note sempre, serie su richiesta)
+        let pianiDaAggiornare = getFromLocalStorage('pianiDiAllenamento');
+        const pianoDaAggiornare = pianiDaAggiornare.find(p => p.id === pianoId);
+        const routineDaAggiornare = pianoDaAggiornare.routine.find(r => r.id === routineId);
 
+        if (routineDaAggiornare) {
             workoutLog.esercizi.forEach(loggedExercise => {
-                const esercizioNellaRoutine = routineDaAggiornare.esercizi.find(e => e.esercizioId === loggedExercise.esercizioId);
+                // Usa instanceId per trovare l'esercizio esatto, fallback su esercizioId solo se necessario
+                const esercizioNellaRoutine = routineDaAggiornare.esercizi.find(e => 
+                    (loggedExercise.instanceId && e.id === loggedExercise.instanceId) || 
+                    (!loggedExercise.instanceId && e.esercizioId === loggedExercise.esercizioId)
+                );
+                
                 if (esercizioNellaRoutine) {
-                    // Aggiorna le serie dell'esercizio nella routine pianificata
-                    esercizioNellaRoutine.serie = loggedExercise.serie;
+                    // Aggiorna SEMPRE le note
+                    esercizioNellaRoutine.note = loggedExercise.note;
+
+                    // Aggiorna le serie SOLO se la checkbox è spuntata
+                    if (updateRoutineToggle.checked) {
+                        esercizioNellaRoutine.serie = loggedExercise.serie;
+                    }
                 }
             });
-
             saveToLocalStorage('pianiDiAllenamento', pianiDaAggiornare);
         }
 
@@ -1257,7 +1312,7 @@ function setupRoutineDettaglioPage() {
                 <div class="set-inputs">
                     <div class="adjust-control">
                         <button class="btn-weight-adjust" data-adjust="-2.5">-</button>
-                        <input type="number" class="set-input weight-input" value="${kgValue}" inputmode="numeric">
+                        <input type="number" class="set-input weight-input" value="${kgValue}" inputmode="decimal" step="any">
                         <button class="btn-weight-adjust" data-adjust="2.5">+</button>
                     </div>
                     <div class="adjust-control">
@@ -1496,7 +1551,7 @@ function setupRoutineDettaglioPage() {
                     <div class="set-inputs">
                         <div class="adjust-control">
                             <button class="btn-weight-adjust" data-adjust="-2.5">-</button>
-                            <input type="number" class="set-input weight-input" value="${s.kg}" inputmode="numeric">
+                        <input type="number" class="set-input weight-input" value="${s.kg}" inputmode="decimal" step="any">
                             <button class="btn-weight-adjust" data-adjust="2.5">+</button>
                         </div>
                         <div class="adjust-control">

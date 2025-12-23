@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="GymBook">
-    <link rel="apple-touch-icon" href="icon.png">
-    <link rel="manifest" href="manifest.json">
-    <title>Home - GymBook</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Home (Nuova Struttura) - GymBook</title>
+    
+    <!-- 1. Carichiamo i CSS modulari -->
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/pages/home.css">
 </head>
 <body>
     <header class="app-header">
@@ -24,12 +23,9 @@
         </div>
     </header>
 
-
-    
     <div class="content-wrapper">
         <div class="home-header">
             <h2 id="active-plan-name">Nessun piano attivo</h2>
-            <!-- Il pulsante per cambiare piano è stato spostato nella pagina "Piani di Allenamento" -->
         </div>
         
         <div id="routine-list-home">
@@ -37,11 +33,10 @@
         </div>
     </div>
     
-    <!-- Banner Allenamento in Corso (nascosto di default) -->
+    <!-- Banner Allenamento in Corso -->
     <div id="active-workout-banner" style="display: none;">
-        <a href="allenamento.html" class="workout-banner-link">
+        <div class="workout-banner-link" style="cursor: pointer;">
             <header class="workout-sticky-header">
-                <!-- Parte superiore: Nome Routine, Tempo Allenamento -->
                 <div class="workout-header"> 
                     <div class="content-wrapper">
                         <h1 class="routine-title">[Nome Routine]</h1>
@@ -50,7 +45,6 @@
                         </div>
                     </div>
                 </div>
-                <!-- Parte inferiore: Sezione Timer di Recupero (nascosta di default) -->
                 <div class="recovery-timer">
                     <div class="content-wrapper">
                         <span class="timer-display">00:00</span>
@@ -62,7 +56,7 @@
                     </div>
                 </div>
             </header>
-        </a>
+        </div>
     </div>
 
     <nav class="bottom-nav">
@@ -80,6 +74,9 @@
         </a>
     </nav>
 
-    <script src="app.js"></script>
+    <!-- 2. Carichiamo i JS modulari nell'ordine corretto -->
+    <script src="js/utils.js"></script>
+    <script src="js/pages/home.js"></script> <!-- Logica specifica per la home -->
+    <script src="js/main.js"></script> <!-- Router principale -->
 </body>
 </html>

@@ -3,32 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="GymBook">
-    <link rel="apple-touch-icon" href="icon.png">
-    <link rel="manifest" href="manifest.json">
-    <title>Dettaglio Routine - GymBook</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Dettaglio Routine (Nuova Struttura) - GymBook</title>
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/pages/workout.css"> <!-- Riusiamo stili simili -->
 </head>
 <body>
+    <header class="app-header">
+        <div class="content-wrapper">
+            <a href="#" onclick="history.back(); return false;" class="header-icon-left">
+                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" /></svg>
+            </a>
+            <div class="header-title-group">
+                <h1 id="titolo-dettaglio-routine">...</h1>
+            </div>
+            <div class="header-icon-right-placeholder"></div>
+        </div>
+    </header>
     
     <div class="content-wrapper">
-        <h1 id="titolo-dettaglio-routine">...</h1>
-
-        <!-- Sezione per aggiungere esercizi (ora in alto) -->
         <article class="add-exercise-section">
             <button id="btn-open-exercise-modal" class="btn-primary">Aggiungi Esercizi</button>
         </article>
 
-        <!-- Modal per selezione esercizi -->
         <div id="exercise-modal" class="modal">
             <div class="modal-content">
                 <span class="close-modal">&times;</span>
                 <h3>Seleziona Esercizi</h3>
-                <div id="container-selezione-esercizi" class="exercise-selection-list">
-                    <!-- Checkbox caricati da JS -->
-                </div>
+                <div id="container-selezione-esercizi" class="exercise-selection-list"></div>
                 <div class="modal-actions">
                     <button id="btn-confirm-add-exercises" class="btn-primary">Aggiungi Selezionati</button>
                 </div>
@@ -37,9 +39,7 @@
 
         <hr>
 
-        <section id="lista-esercizi-routine">
-            <!-- Gli esercizi esistenti in questa routine verranno caricati qui -->
-        </section>
+        <section id="lista-esercizi-routine"></section>
     </div>
 
     <nav class="bottom-nav">
@@ -57,6 +57,8 @@
         </a>
     </nav>
 
-    <script src="app.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/pages/routine.js"></script>
+    <script src="js/main.js"></script>
 </body>
 </html>

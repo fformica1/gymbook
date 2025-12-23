@@ -3,19 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="GymBook">
-    <link rel="apple-touch-icon" href="icon.png">
-    <link rel="manifest" href="manifest.json">
-    <title>Esercizi - GymBook</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Esercizi (Nuova Struttura) - GymBook</title>
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/components.css">
 </head>
 <body>
+    <header class="app-header">
+        <div class="content-wrapper">
+            <a href="index.html" class="header-icon-left">
+                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" /></svg>
+            </a>
+            <div class="header-title-group">
+                <h1>Esercizi</h1>
+            </div>
+            <div class="header-icon-right-placeholder"></div>
+        </div>
+    </header>
     
     <div class="content-wrapper">
-        <h1>Gestione Esercizi</h1>
-
         <section>
             <h2>Crea Nuovo Esercizio</h2>
             <form id="form-crea-esercizio">
@@ -34,7 +39,7 @@
                     <option value="spalle">Spalle</option>
                     <option value="tricipiti">Tricipiti</option>
                 </select>
-                <button type="submit">Crea Esercizio</button>
+                <button type="submit" class="btn-blu">Crea Esercizio</button>
             </form>
         </section>
 
@@ -108,6 +113,9 @@
             <span>Esercizi</span>
         </a>
     </nav>
-    <script src="app.js"></script>
+
+    <script src="js/utils.js"></script>
+    <script src="js/pages/exercises.js"></script>
+    <script src="js/main.js"></script>
 </body>
 </html>

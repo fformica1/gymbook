@@ -1,0 +1,128 @@
+.home-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#active-plan-name {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.last-workout-date {
+    color: var(--text-dim);
+    font-size: 16px;
+    white-space: nowrap;
+}
+
+/* --- Banner Allenamento Attivo --- */
+#active-workout-banner {
+    position: fixed;
+    bottom: 88px; /* Altezza approssimativa della navbar inferiore */
+    left: 0;
+    right: 0;
+    z-index: 1000; /* Sotto la navbar (1001) ma sopra il contenuto */
+    background-color: var(--card-bg); /* Sfondo solido per coprire il contenuto */
+    border-top: 1px solid var(--border-light);
+    box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.2); /* Ombra per staccare dal contenuto */
+}
+
+/* Rimuove stili di link e highlight dal banner */
+.workout-banner-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+/* Sovrascriviamo gli stili dell'header per adattarli al banner */
+#active-workout-banner .workout-sticky-header { background-color: transparent; border-bottom: none; position: static; }
+
+/* --- Parte Superiore (Info) --- */
+/* Deve occupare meno spazio visivo */
+#active-workout-banner .workout-header { 
+    padding: 8px 0; 
+    
+}
+
+/* Aggiungiamo le proprietà flex per allineare gli elementi nella riga superiore del banner */
+#active-workout-banner .workout-header .content-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#active-workout-banner .routine-title { 
+    font-size: 20px; 
+    color: var(--text); 
+    font-weight: bold;
+    margin: 0;
+}
+
+#active-workout-banner .workout-timer { 
+    font-size: 20px; 
+    font-weight: bold; 
+    color: var(--text);
+}
+
+/* --- Parte Inferiore (Timer e Controlli) --- */
+/* Deve essere predominante */
+#active-workout-banner .recovery-timer { 
+    padding: 16px 0; 
+    border-top: none; 
+}
+
+/* Aggiungiamo le proprietà flex per allineare i controlli e il display del timer */
+#active-workout-banner .recovery-timer .content-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Il timer a sinistra, bello grande */
+#active-workout-banner .timer-display {
+    font-size: 45px;
+    font-weight: 800;
+    margin-left: 0;
+    margin-right: 20px;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+/* I controlli prendono tutto lo spazio rimanente a sinistra */
+#active-workout-banner .timer-controls {
+    flex-grow: 1;
+    display: flex;
+    gap: 8px;
+}
+
+/* Pulsanti belli grandi e facili da premere */
+#active-workout-banner .timer-controls button {
+    flex: 1; /* Si espandono per riempire lo spazio */
+    padding: 12px 0;
+    font-size: 15px;
+    height: 100%;
+}
+
+/* --- Stile Banner Completato (Tutto Verde) --- */
+#active-workout-banner.timer-finished {
+    background-color: var(--accent);
+}
+
+#active-workout-banner.timer-finished .routine-title,
+#active-workout-banner.timer-finished .workout-timer,
+#active-workout-banner.timer-finished .timer-display {
+    color: #ffffff !important;
+}
+
+#active-workout-banner.timer-finished .btn-grigio {
+    color: #ffffff !important;
+    background-color: rgba(255, 255, 255, 0.3); /* Pulsanti leggermente più chiari */
+}
+
+#active-workout-banner.timer-finished .workout-header {
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+}

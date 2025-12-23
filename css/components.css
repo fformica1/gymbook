@@ -1,0 +1,219 @@
+/* --- Form e Input --- */
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: var(--font-size-base);
+    color: var(--text-dim);
+}
+
+input[type="text"],
+input[type="number"],
+select,
+textarea {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    border: 1px solid var(--border-light);
+    background-color: var(--card-bg);
+    color: var(--text);
+    box-sizing: border-box;
+    font-size: var(--font-size-base);
+}
+
+/* Textarea che si espande automaticamente */
+textarea.auto-expand {
+    resize: none; /* Disabilita il ridimensionamento manuale */
+    overflow-y: hidden; /* Nasconde la scrollbar */
+    min-height: 50px; /* Altezza approssimativa per una riga di testo con padding */
+    height: 50px;
+}
+
+/* --- Bottoni --- */
+.btn-primary {
+    width: 100%;
+    background: var(--accent);
+    color: black;
+    border: none;
+    border-radius: 14px;
+    padding: 18px;
+    font-weight: bold;
+    font-size: 18px;
+    transition: transform 0.1s;
+}
+.btn-primary:active { transform: scale(0.96); }
+
+.btn-blu {
+    background-color: #0a84ff;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 18px;
+    cursor: pointer;
+}
+
+.btn-grigio {
+    background-color: #3a3a3c;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 18px;
+    cursor: pointer;
+}
+[data-theme="light"] .btn-grigio {
+    background-color: #e5e5ea;
+    color: #000000;
+}
+
+.btn-elimina {
+    background-color: var(--danger);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 18px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+/* --- Liste e Card Generiche --- */
+article,
+.content-wrapper > section > div,
+#lista-routine-esistenti {
+    background-color: var(--card-bg);
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+
+.list-item-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 15px;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.list-item-container:last-child {
+    border-bottom: none;
+}
+
+.list-item-container.dragging {
+    opacity: 0.5;
+}
+
+.drag-handle {
+    cursor: grab;
+    padding-right: 15px;
+    color: var(--text-dim);
+}
+.drag-handle svg {
+    width: 24px;
+    height: 24px;
+}
+
+.title-link {
+    text-decoration: none;
+    color: inherit;
+    flex-grow: 1;
+    min-width: 0;
+    margin-right: 10px;
+}
+
+.title-link h3 {
+    margin: 0;
+    font-size: 24px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* --- Modali --- */
+.modal {
+    display: none;
+    position: fixed; 
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%; 
+    height: 100%; 
+    background-color: rgba(0,0,0,0.4);
+    backdrop-filter: blur(5px);
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background-color: var(--card-bg);
+    padding: 20px;
+    border: 1px solid var(--border-light);
+    width: 90%; 
+    max-width: 500px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    box-sizing: border-box;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.close-modal {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.modal-actions {
+    margin-top: 15px;
+    text-align: right;
+}
+
+/* --- Switch Toggle --- */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 51px;
+    height: 31px;
+}
+
+.switch input { 
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #3a3a3c;
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 23px;
+    width: 23px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: var(--accent);
+}
+
+input:checked + .slider:before {
+    transform: translateX(20px);
+}

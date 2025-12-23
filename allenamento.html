@@ -3,18 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="GymBook">
-    <link rel="apple-touch-icon" href="icon.png">
-    <link rel="manifest" href="manifest.json">
-    <title>Allenamento - GymBook</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Allenamento (Nuova Struttura) - GymBook</title>
+    
+    <!-- CSS Modulari -->
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/pages/workout.css"> <!-- Specifico per allenamento -->
 </head>
 <body>
-    <!-- Blocco unico fisso in alto -->
+    <!-- Header Sticky -->
     <header class="workout-sticky-header">
-        <!-- Parte superiore: Nome Routine, Tempo Allenamento, Tasto Fine Allenamento -->
         <div class="workout-header"> 
             <div class="content-wrapper">
                 <h1 class="routine-title">[Nome Routine]</h1>
@@ -25,7 +23,6 @@
             </div>
         </div>
 
-        <!-- Parte inferiore: Sezione Timer di Recupero -->
         <div class="recovery-timer">
             <div class="content-wrapper">
                 <span class="timer-display">00:00</span>
@@ -38,14 +35,14 @@
         </div>
     </header>
 
-    <!-- Contenuto principale scrollabile (con gli esercizi) -->
+    <!-- Contenuto principale -->
     <section id="lista-esercizi-allenamento" class="main-content-scrollable">
         <div class="content-wrapper">
-            <!-- Gli esercizi della routine verranno caricati qui dinamicamente -->
+            <!-- Esercizi caricati dinamicamente -->
         </div>
     </section>
 
-    <!-- Nuovo container per le impostazioni -->
+    <!-- Impostazioni -->
     <section class="workout-settings-container">
         <div class="content-wrapper">
             <div class="setting-row">
@@ -58,6 +55,9 @@
         </div>
     </section>
 
-    <script src="app.js"></script>
+    <!-- JS Modulari -->
+    <script src="js/utils.js"></script>
+    <script src="js/pages/workout.js"></script> <!-- Logica specifica per allenamento -->
+    <script src="js/main.js"></script>
 </body>
 </html>

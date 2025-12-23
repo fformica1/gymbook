@@ -5,7 +5,7 @@
     left: 0;
     right: 0;
     z-index: 100;
-    background-color: var(--bg);
+    background-color: var(--card-bg);
     /* border-bottom: 1px solid var(--border-light); -- Rimosso per risolvere artefatto di rendering */
 }
 
@@ -186,11 +186,12 @@ input[type="number"].recovery-input {
     font-size: 16px;
     color: var(--text-dim);
     font-weight: bold;    
-    padding: 0 10px;
+    padding: 0 5px;
     margin-bottom: 5px;
 }
 
-.set-number-header, .set-check-header { flex: 0 0 40px; text-align: center; }
+.set-number-header { flex: 0 0 30px; text-align: center; }
+.set-check-header { flex: 0 0 40px; text-align: center; }
 .set-previous-header { flex: 1; text-align: center; }
 .set-inputs-header { display: flex; flex: 2; justify-content: space-around; }
 .set-inputs-header > span { flex: 1; text-align: center; }
@@ -207,13 +208,17 @@ input[type="number"].recovery-input {
     align-items: center;
     justify-content: space-between;
     font-size: 20px;
-    padding: 6px 10px;
+    padding: 6px 5px;
     margin: 0;
 }
 
 .set-row:nth-child(even) {
     background-color: #2c2c2e;
     border-radius: 6px;
+}
+
+[data-theme="light"] .set-row:nth-child(even) {
+    background-color: rgba(0, 0, 0, 0.05);
 }
 
 .set-row.completed {
@@ -230,15 +235,22 @@ input[type="number"].recovery-input {
 .set-number {
     font-weight: bold;
     color: var(--text-dim);
-    flex: 0 0 40px;
+    flex: 0 0 30px;
     text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .set-previous {
     color: var(--text-dim);
-    font-size: 18px;
+    font-size: 13px;
+    white-space: nowrap;
     flex: 1;
     text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .set-inputs {
@@ -275,6 +287,8 @@ input.set-input {
     flex: 0 0 40px;
     display: flex;
     justify-content: center;
+    align-items: center;
+    margin: 0;
     accent-color: var(--accent);
 }
 
@@ -284,3 +298,107 @@ input.set-input {
     margin-top: 15px;
 }
 .action-buttons-container button { flex-grow: 1; width: 50%; padding: 15px; }
+
+/* --- Impostazioni Allenamento (Toggle) --- */
+.workout-settings-container .setting-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--card-bg);
+    padding: 15px;
+    border-radius: 12px;
+    margin-top: 20px;
+}
+
+.workout-settings-container label {
+    margin-bottom: 0;
+    width: auto; /* Sovrascrive la regola globale 'display: block' impedendo alla label di occupare tutta la larghezza */
+}
+
+/* --- Override Font Size Note --- */
+#lista-esercizi-allenamento textarea {
+    font-size: 14px !important;
+}
+
+/* --- Scroll Snap (Magnete Esercizi) --- */
+html {
+    scroll-snap-type: y proximity; /* 'proximity' non forza lo scorrimento ma aggancia se vicino */
+}
+
+.esercizio-card {
+    scroll-snap-align: start;
+    scroll-margin-top: 150px; /* Compensa l'altezza dell'header sticky (~140px) + un po' di respiro */
+}
+
+/* --- Quick Adjust Row (Sotto le serie) --- */
+.quick-adjust-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 10px;
+    margin-top: 5px;
+    margin-bottom: 10px;
+}
+
+.btn-inline-set {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 32px;
+}
+
+.btn-inline-set svg {
+    width: 20px;
+    height: 20px;
+}
+
+.btn-remove-set-inline { flex: 0 0 30px; color: var(--danger); } /* Allineato con .set-number */
+.btn-add-set-inline { flex: 1; color: var(--accent); } /* Allineato con .set-previous */
+
+/* .quick-adjust-spacer-start e prev rimossi/sostituiti dai bottoni */
+.quick-adjust-spacer-end { flex: 0 0 40px; } /* Corrisponde a .set-check */
+
+.quick-adjust-controls {
+    display: flex;
+    flex: 2; /* Corrisponde a .set-inputs */
+    justify-content: space-around;
+}
+
+.quick-adjust-group {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.btn-quick-adjust {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid var(--border-light);
+    background-color: var(--card-bg);
+    color: var(--text);
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    cursor: pointer;
+}
+
+.btn-quick-adjust:active {
+    background-color: var(--border-light);
+}
+
+/* --- Focus Mode (Oscuramento esercizi non attivi) --- */
+.esercizio-card {
+    transition: opacity 0.3s ease;
+}
+
+.esercizio-card.dimmed {
+    opacity: 0.3; /* Rende l'esercizio molto trasparente ("velato") */
+}

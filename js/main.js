@@ -3,6 +3,17 @@
 document.addEventListener('DOMContentLoaded', () => {
     console.log("DOM completamente caricato. Inizializzo l'applicazione (Nuova Struttura).");
 
+    // --- Registrazione Service Worker (PWA) ---
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js')
+            .then(registration => {
+                console.log('Service Worker registrato con successo:', registration.scope);
+            })
+            .catch(error => {
+                console.log('Registrazione Service Worker fallita:', error);
+            });
+    }
+
     // Funzione per determinare la pagina corrente
     const getCurrentPage = () => {
         const path = window.location.pathname;

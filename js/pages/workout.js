@@ -101,13 +101,35 @@ window.setupAllenamentoPage = function() {
                 </div>`;
         }).join('');
 
+        // HTML per la riga di regolazione rapida (Quick Adjust)
+        const quickAdjustHtml = `
+            <div class="quick-adjust-row">
+                <button class="btn-remove-set btn-inline-set btn-remove-set-inline" title="Rimuovi ultima serie">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg>
+                </button>
+                <button class="btn-add-set btn-inline-set btn-add-set-inline" title="Aggiungi serie">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                </button>
+                <div class="quick-adjust-controls">
+                    <div class="quick-adjust-group">
+                        <button class="btn-quick-adjust" data-type="kg" data-val="-2.5">−</button>
+                        <button class="btn-quick-adjust" data-type="kg" data-val="2.5">+</button>
+                    </div>
+                    <div class="quick-adjust-group">
+                        <button class="btn-quick-adjust" data-type="reps" data-val="-1">−</button>
+                        <button class="btn-quick-adjust" data-type="reps" data-val="1">+</button>
+                    </div>
+                </div>
+                <div class="quick-adjust-spacer-end"></div>
+            </div>`;
+
         card.innerHTML = `
             <div class="esercizio-card-header"><h2>${esercizio.nome}</h2></div>
             <div class="exercise-details"><textarea placeholder="Note" rows="1" class="auto-expand">${workoutState?.esercizi[esercizio.id]?.note || esercizio.note}</textarea></div>
             <div class="recovery-time-display"><span>Tempo di Recupero: <input type="number" class="recovery-input" value="${workoutState?.esercizi[esercizio.id]?.recupero || esercizio.recupero}" inputmode="numeric"> s</span></div>
             <div class="sets-header"><span class="set-number-header">Set</span><span class="set-previous-header">Precedente</span><div class="set-inputs-header"><span>Kg</span><span>Reps</span></div><span class="set-check-header">✓</span></div>
             <div class="sets-container">${serieHtml}</div>
-            <div class="action-buttons-container"><button class="btn-remove-set btn-elimina">Rimuovi Serie</button><button class="btn-add-set btn-blu">Aggiungi Serie</button></div>
+            ${quickAdjustHtml}
         `;
         container.appendChild(card);
         container.appendChild(document.createElement('hr'));
@@ -135,11 +157,112 @@ window.setupAllenamentoPage = function() {
         textarea.style.height = textarea.scrollHeight + 'px';
     });
 
+    // --- Funzione Focus Mode (Oscura esercizi non attivi) ---
+    function updateExerciseFocus() {
+        const cards = container.querySelectorAll('.esercizio-card');
+        let activeFound = false;
+
+        cards.forEach(card => {
+            if (activeFound) {
+                // Esercizi futuri (dopo quello attivo) -> Oscurati
+                card.classList.add('dimmed');
+            } else {
+                const allSets = card.querySelectorAll('.set-check');
+                const isComplete = Array.from(allSets).every(cb => cb.checked);
+
+                if (!isComplete) {
+                    // Primo esercizio non completo -> ATTIVO (Visibile)
+                    card.classList.remove('dimmed');
+                    activeFound = true;
+                } else {
+                    // Esercizi completati (prima di quello attivo) -> Oscurati
+                    card.classList.add('dimmed');
+                }
+            }
+        });
+    }
+    updateExerciseFocus(); // Esegui all'avvio
+
+    // Scroll automatico all'esercizio in corso quando si rientra nella pagina
+    setTimeout(() => {
+        const activeCard = container.querySelector('.esercizio-card:not(.dimmed)');
+        if (activeCard) {
+            activeCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }, 300);
+
     // Event Delegation
     container.addEventListener('click', (e) => {
-        if (e.target.classList.contains('btn-weight-adjust') || e.target.classList.contains('btn-reps-adjust')) {
+        // Gestione pulsanti nascosti (vecchia implementazione, mantenuta per sicurezza)
+        if (e.target.classList.contains('btn-weight-adjust')) {
+            const input = e.target.closest('.adjust-control').querySelector('.set-input');
+            const currentVal = parseFloat(input.value) || 0;
+            const direction = parseFloat(e.target.dataset.adjust) > 0 ? 1 : -1;
+            
+            // Logica Incremento Dinamico
+            const baseIncrement = parseFloat(localStorage.getItem('weightIncrement')) || 2.5;
+            let step = baseIncrement;
+            
+            if (direction > 0) {
+                if (currentVal >= 150) step = 10;
+                else if (currentVal >= 40) step = 5;
+            } else {
+                if (currentVal > 150) step = 10;
+                else if (currentVal > 40) step = 5;
+            }
+            
+            input.value = Math.max(0, currentVal + (step * direction));
+            saveCurrentWorkoutState(); 
+        } else if (e.target.classList.contains('btn-reps-adjust')) {
             const input = e.target.closest('.adjust-control').querySelector('.set-input');
             input.value = Math.max(0, (parseFloat(input.value) || 0) + parseFloat(e.target.dataset.adjust));
+            saveCurrentWorkoutState(); // Salva dopo la modifica
+        }
+
+        // Gestione NUOVI pulsanti Quick Adjust (sotto la lista)
+        if (e.target.classList.contains('btn-quick-adjust')) {
+            const card = e.target.closest('.esercizio-card');
+            const setsContainer = card.querySelector('.sets-container');
+            
+            // Trova la prima serie non completata (serie in corso)
+            const rows = Array.from(setsContainer.querySelectorAll('.set-row'));
+            let targetRow = rows.find(row => !row.querySelector('.set-check').checked);
+            // Se tutte sono completate, usa l'ultima come fallback per eventuali correzioni
+            if (!targetRow && rows.length > 0) targetRow = rows[rows.length - 1];
+
+            if (targetRow) {
+                const type = e.target.dataset.type; // 'kg' o 'reps'
+                const val = parseFloat(e.target.dataset.val);
+                // Seleziona l'input corretto: 0 per kg, 1 per reps
+                const inputIndex = type === 'kg' ? 0 : 1;
+                const input = targetRow.querySelectorAll('.set-input')[inputIndex];
+                
+                const currentValue = parseFloat(input.value) || 0;
+                let newValue;
+
+                if (type === 'kg') {
+                    const direction = val > 0 ? 1 : -1;
+                    const baseIncrement = parseFloat(localStorage.getItem('weightIncrement')) || 2.5;
+                    let step = baseIncrement;
+                    
+                    if (direction > 0) {
+                        if (currentValue >= 150) step = 10;
+                        else if (currentValue >= 40) step = 5;
+                    } else {
+                        if (currentValue > 150) step = 10;
+                        else if (currentValue > 40) step = 5;
+                    }
+                    newValue = Math.max(0, currentValue + (step * direction));
+                } else {
+                    newValue = Math.max(0, currentValue + val);
+                }
+                
+                // Aggiorna il valore e forza l'aggiornamento visivo se necessario
+                input.value = newValue;
+                
+                // Salva lo stato
+                saveCurrentWorkoutState();
+            }
         }
     });
 
@@ -173,6 +296,28 @@ window.setupAllenamentoPage = function() {
                 startRecoveryTimer(parseInt(e.target.closest('.esercizio-card').querySelector('.recovery-input').value, 10) || 90);
             } else {
                 row.classList.remove('completed');
+            }
+
+            // Scorrimento automatico al prossimo esercizio se completato
+            const card = e.target.closest('.esercizio-card');
+            if (card) {
+                const allSets = card.querySelectorAll('.set-check');
+                const allCompleted = Array.from(allSets).every(cb => cb.checked);
+
+                if (allCompleted) {
+                    let nextCard = card.nextElementSibling;
+                    while (nextCard && !nextCard.classList.contains('esercizio-card')) {
+                        nextCard = nextCard.nextElementSibling;
+                    }
+                    if (nextCard) {
+                        setTimeout(() => {
+                            nextCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }, 500);
+                    }
+                }
+                
+                // Aggiorna il focus visivo (oscura/rivela esercizi)
+                updateExerciseFocus();
             }
         }
     });
@@ -259,6 +404,7 @@ window.setupAllenamentoPage = function() {
     btnEndWorkout.addEventListener('click', () => {
         if (wakeLock) wakeLock.release();
         clearInterval(workoutInterval);
+        // Pulisce lo stato dell'allenamento attivo
         localStorage.removeItem('activeWorkout');
         localStorage.removeItem('workoutStartTime');
         localStorage.removeItem('recoverySoundPlayed');
@@ -272,33 +418,59 @@ window.setupAllenamentoPage = function() {
             pianoId, routineId, routineNome: routine.nome, esercizi: []
         };
 
+        // 1. Popola workoutLog per lo STORICO con solo le serie COMPLETATE
         container.querySelectorAll('.esercizio-card').forEach(card => {
-            const serieCompletate = [];
+            const seriePerStorico = [];
             card.querySelectorAll('.set-row').forEach(riga => {
-                const inputs = riga.querySelectorAll('input[type="number"]');
-                serieCompletate.push({ kg: inputs[0].value || 0, reps: inputs[1].value || 0 });
+                if (riga.querySelector('.set-check').checked) {
+                    const inputs = riga.querySelectorAll('input[type="number"]');
+                    seriePerStorico.push({ kg: inputs[0].value || 0, reps: inputs[1].value || 0 });
+                }
             });
             workoutLog.esercizi.push({
                 esercizioId: routine.esercizi.find(e => e.id === card.dataset.esercizioId).esercizioId,
                 instanceId: card.dataset.esercizioId,
                 nome: routine.esercizi.find(e => e.id === card.dataset.esercizioId).nome,
-                serie: serieCompletate,
+                serie: seriePerStorico,
                 note: card.querySelector('textarea').value
             });
         });
 
+        // 2. Salva lo storico
         let storicoCompleto = getFromLocalStorage('storicoAllenamenti') || [];
         storicoCompleto.unshift(workoutLog);
         saveToLocalStorage('storicoAllenamenti', storicoCompleto);
 
+        // 3. Aggiorna la routine (se richiesto) o solo le note
         let pianiDaAggiornare = getFromLocalStorage('pianiDiAllenamento');
         const routineDaAggiornare = pianiDaAggiornare.find(p => p.id === pianoId).routine.find(r => r.id === routineId);
         if (routineDaAggiornare) {
-            workoutLog.esercizi.forEach(logged => {
-                const target = routineDaAggiornare.esercizi.find(e => (logged.instanceId && e.id === logged.instanceId) || (!logged.instanceId && e.esercizioId === logged.esercizioId));
-                if (target) {
-                    target.note = logged.note;
-                    if (updateRoutineToggle.checked) target.serie = logged.serie;
+            container.querySelectorAll('.esercizio-card').forEach(card => {
+                const esercizioTarget = routineDaAggiornare.esercizi.find(e => e.id === card.dataset.esercizioId);
+                if (esercizioTarget) {
+                    // Aggiorna sempre le note
+                    esercizioTarget.note = card.querySelector('textarea').value;
+
+                    // Se "Aggiorna routine" è spuntato, aggiorna i valori delle serie
+                    if (updateRoutineToggle.checked) {
+                        const nuoveSerie = [];
+                        card.querySelectorAll('.set-row').forEach((riga, index) => {
+                            const inputs = riga.querySelectorAll('input[type="number"]');
+                            const kg = inputs[0].value || 0;
+                            const reps = inputs[1].value || 0;
+                            
+                            // Se la serie è stata completata, usa i nuovi valori
+                            if (riga.querySelector('.set-check').checked) {
+                                nuoveSerie.push({ kg, reps });
+                            } else {
+                                // Altrimenti, mantieni i vecchi valori dalla routine originale
+                                if (esercizioTarget.serie[index]) {
+                                    nuoveSerie.push(esercizioTarget.serie[index]);
+                                }
+                            }
+                        });
+                        esercizioTarget.serie = nuoveSerie;
+                    }
                 }
             });
             saveToLocalStorage('pianiDiAllenamento', pianiDaAggiornare);

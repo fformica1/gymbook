@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Impostazioni (Nuova Struttura) - GymBook</title>
+    <title>Impostazioni - GymBook</title>
+    <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="css/global.css">
     <link rel="stylesheet" href="css/components.css">
 </head>
@@ -23,11 +24,20 @@
     <div class="content-wrapper">
         <section>
             <div class="list-item-container" style="display: block;">
-                <div class="setting-row">
-                    <label for="theme-select" style="margin: 0; font-size: 18px;">Tema Applicazione</label>
+                <div class="setting-row" style="display: flex; flex-direction: row; flex-wrap: nowrap; justify-content: space-between; align-items: center;">
+                    <label for="theme-select" style="margin: 0; font-size: 18px; white-space: nowrap;">Tema Applicazione</label>
                     <select id="theme-select" style="width: auto; margin: 0; padding: 8px;">
                         <option value="dark">Scuro</option>
                         <option value="light">Chiaro</option>
+                    </select>
+                </div>
+            </div>
+            <div class="list-item-container" style="display: block;">
+                <div class="setting-row" style="display: flex; flex-direction: row; flex-wrap: nowrap; justify-content: space-between; align-items: center;">
+                    <label for="weight-increment-select" style="margin: 0; font-size: 18px; white-space: nowrap;">Incremento Peso Base</label>
+                    <select id="weight-increment-select" style="width: auto; margin: 0; padding: 8px;">
+                        <option value="2">2 kg</option>
+                        <option value="2.5">2.5 kg</option>
                     </select>
                 </div>
             </div>
@@ -43,5 +53,15 @@
     <script src="js/utils.js"></script>
     <script src="js/pages/settings.js"></script>
     <script src="js/main.js"></script>
+    <script>
+        // Script inline per gestire il salvataggio dell'incremento peso
+        document.addEventListener('DOMContentLoaded', () => {
+            const weightSelect = document.getElementById('weight-increment-select');
+            if (weightSelect) {
+                weightSelect.value = localStorage.getItem('weightIncrement') || '2.5';
+                weightSelect.addEventListener('change', (e) => localStorage.setItem('weightIncrement', e.target.value));
+            }
+        });
+    </script>
 </body>
 </html>

@@ -111,7 +111,8 @@ function setupRoutineDettaglio(pianoId, routineId) {
             const lastRow = setsContainer.lastElementChild;
             const kg = lastRow ? lastRow.querySelectorAll('input')[0].value : '';
             const reps = lastRow ? lastRow.querySelectorAll('input')[1].value : '';
-            setsContainer.innerHTML += `<div class="set-row"><span class="set-number">${setsContainer.children.length + 1}</span><div class="set-inputs"><div class="adjust-control"><button class="btn-weight-adjust" data-adjust="-2.5">-</button><input type="number" class="set-input weight-input" value="${kg}" inputmode="decimal" step="any"><button class="btn-weight-adjust" data-adjust="2.5">+</button></div><div class="adjust-control"><button class="btn-reps-adjust" data-adjust="-1">-</button><input type="number" class="set-input reps-input" value="${reps}" inputmode="numeric"><button class="btn-reps-adjust" data-adjust="1">+</button></div></div></div>`;
+            const newSetHtml = `<div class="set-row"><span class="set-number">${setsContainer.children.length + 1}</span><div class="set-inputs"><div class="adjust-control"><button class="btn-weight-adjust" data-adjust="-2.5">-</button><input type="number" class="set-input weight-input" value="${kg}" inputmode="decimal" step="any"><button class="btn-weight-adjust" data-adjust="2.5">+</button></div><div class="adjust-control"><button class="btn-reps-adjust" data-adjust="-1">-</button><input type="number" class="set-input reps-input" value="${reps}" inputmode="numeric"><button class="btn-reps-adjust" data-adjust="1">+</button></div></div></div>`;
+            setsContainer.insertAdjacentHTML('beforeend', newSetHtml);
             saveRoutineState();
         }
         if (e.target.classList.contains('btn-remove-set')) {

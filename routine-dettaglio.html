@@ -5,14 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dettaglio Routine - GymBook</title>
     <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="icon-browser.png">
     <link rel="stylesheet" href="css/global.css">
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/pages/workout.css"> <!-- Riusiamo stili simili -->
+    <link rel="stylesheet" href="css/pages/routine-dettaglio.css">
 </head>
-<body>
+<body class="page-routine-dettaglio">
     <header class="app-header">
         <div class="content-wrapper">
-            <a href="#" onclick="history.back(); return false;" class="header-icon-left">
+            <a id="btn-back" href="#" class="header-icon-left">
                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" /></svg>
             </a>
             <div class="header-title-group">
@@ -22,27 +24,28 @@
         </div>
     </header>
     
-    <div class="content-wrapper">
-        <article class="add-exercise-section">
-            <button id="btn-open-exercise-modal" class="btn-primary">Aggiungi Esercizi</button>
-        </article>
-
-        <div id="exercise-modal" class="modal">
-            <div class="modal-content">
-                <span class="close-modal">&times;</span>
-                <h3>Seleziona Esercizi</h3>
-                <div id="container-selezione-esercizi" class="exercise-selection-list"></div>
-                <div class="modal-actions">
-                    <button id="btn-confirm-add-exercises" class="btn-primary">Aggiungi Selezionati</button>
-                </div>
+        <div id="routine-details-view">
+    
+            <div class="content-wrapper">
+    
+                <article class="add-exercise-section">
+    
+                    <button id="btn-open-exercise-modal" class="btn-primary">Aggiungi Esercizi</button>
+    
+                </article>
+    
+        
+    
+                <hr>
+    
+        
+    
+                <section id="lista-esercizi-routine"></section>
+    
             </div>
+    
         </div>
-
-        <hr>
-
-        <section id="lista-esercizi-routine"></section>
-    </div>
-
+    
     <nav class="bottom-nav">
         <a href="index.html" class="nav-item">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h7.5" /></svg>

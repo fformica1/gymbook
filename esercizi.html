@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Esercizi - GymBook</title>
     <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="icon-browser.png">
     <link rel="stylesheet" href="css/global.css">
     <link rel="stylesheet" href="css/components.css">
 </head>
@@ -17,44 +18,17 @@
             <div class="header-title-group">
                 <h1>Esercizi</h1>
             </div>
-            <div class="header-icon-right-placeholder"></div>
+            <button id="btn-open-create-modal" style="background: none; border: none; color: var(--accent); padding: 5px;">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 28px; height: 28px;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+            </button>
         </div>
     </header>
     
     <div class="content-wrapper">
         <section>
-            <h2>Crea Nuovo Esercizio</h2>
-            <form id="form-crea-esercizio">
-                <label for="nome-esercizio">Nome Esercizio:</label>
-                <input type="text" id="nome-esercizio" name="nome-esercizio" placeholder="Es: Panca Piana">
-
-                <label for="gruppo-muscolare">Gruppo Muscolare:</label>
-                <select id="gruppo-muscolare" name="gruppo-muscolare">
-                    <option value="bicipiti">Bicipiti</option>
-                    <option value="core">Core</option>
-                    <option value="dorso">Dorso</option>
-                    <option value="femorali">Femorali</option>
-                    <option value="petto">Petto</option>
-                    <option value="polpacci">Polpacci</option>
-                    <option value="quadricipiti">Quadricipiti</option>
-                    <option value="spalle">Spalle</option>
-                    <option value="tricipiti">Tricipiti</option>
-                </select>
-                <button type="submit" class="btn-blu">Crea Esercizio</button>
-            </form>
-        </section>
-
-        <hr>
-
-        <section>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <h2 style="margin: 0;">Elenco Esercizi</h2>
-                <div class="filter-wrapper">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 28px; height: 28px; display: block;">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 0 1-.659 1.591l-5.432 5.432a2.25 2.25 0 0 0-.659 1.591v2.927a2.25 2.25 0 0 1-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 0 0-.659-1.591L3.659 7.409A2.25 2.25 0 0 1 3 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0 1 12 3Z" />
-                    </svg>
-                    <select id="filter-gruppo">
-                        <option value="">Tutti i gruppi</option>
+            <div style="margin-bottom: 15px;">
+                <select id="filter-gruppo" style="width: 100%; padding: 12px; font-size: 16px; border-radius: 8px; border: 1px solid var(--border-light); background-color: var(--card-bg); color: var(--text-normal);">
+                        <option value="">Tutti i gruppi muscolari</option>
                         <option value="bicipiti">Bicipiti</option>
                         <option value="core">Core</option>
                         <option value="dorso">Dorso</option>
@@ -65,39 +39,67 @@
                         <option value="spalle">Spalle</option>
                         <option value="tricipiti">Tricipiti</option>
                     </select>
-                </div>
             </div>
             <div id="lista-esercizi"></div>
 
-            <!-- Modal per modifica esercizio -->
-            <div id="edit-exercise-modal" class="modal">
-                <div class="modal-content">
-                    <span class="close-modal">&times;</span>
-                    <h3>Modifica Esercizio</h3>
-                    <form id="form-modifica-esercizio">
-                        <input type="hidden" id="edit-esercizio-id">
-                        <label for="edit-nome-esercizio">Nome Esercizio:</label>
-                        <input type="text" id="edit-nome-esercizio" required>
-
-                        <label for="edit-gruppo-muscolare">Gruppo Muscolare:</label>
-                        <select id="edit-gruppo-muscolare">
-                            <option value="bicipiti">Bicipiti</option>
-                            <option value="core">Core</option>
-                            <option value="dorso">Dorso</option>
-                            <option value="femorali">Femorali</option>
-                            <option value="petto">Petto</option>
-                            <option value="polpacci">Polpacci</option>
-                            <option value="quadricipiti">Quadricipiti</option>
-                            <option value="spalle">Spalle</option>
-                            <option value="tricipiti">Tricipiti</option>
-                        </select>
-                        <div class="modal-actions">
-                            <button type="submit" class="btn-primary">Salva Modifiche</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
         </section>
+    </div>
+
+    <!-- Modal per creazione esercizio -->
+    <div id="create-exercise-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h3>Crea Nuovo Esercizio</h3>
+            <form id="form-crea-esercizio-modal">
+                <label for="nome-esercizio-modal">Nome Esercizio:</label>
+                <input type="text" id="nome-esercizio-modal" required placeholder="Es: Panca Piana">
+
+                <label for="gruppo-muscolare-modal">Gruppo Muscolare:</label>
+                <select id="gruppo-muscolare-modal">
+                    <option value="bicipiti">Bicipiti</option>
+                    <option value="core">Core</option>
+                    <option value="dorso">Dorso</option>
+                    <option value="femorali">Femorali</option>
+                    <option value="petto">Petto</option>
+                    <option value="polpacci">Polpacci</option>
+                    <option value="quadricipiti">Quadricipiti</option>
+                    <option value="spalle">Spalle</option>
+                    <option value="tricipiti">Tricipiti</option>
+                </select>
+                <div class="modal-actions">
+                    <button type="submit" class="btn-primary">Crea Esercizio</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal per modifica esercizio -->
+    <div id="edit-exercise-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h3>Modifica Esercizio</h3>
+            <form id="form-modifica-esercizio">
+                <input type="hidden" id="edit-esercizio-id">
+                <label for="edit-nome-esercizio">Nome Esercizio:</label>
+                <input type="text" id="edit-nome-esercizio" required>
+
+                <label for="edit-gruppo-muscolare">Gruppo Muscolare:</label>
+                <select id="edit-gruppo-muscolare">
+                    <option value="bicipiti">Bicipiti</option>
+                    <option value="core">Core</option>
+                    <option value="dorso">Dorso</option>
+                    <option value="femorali">Femorali</option>
+                    <option value="petto">Petto</option>
+                    <option value="polpacci">Polpacci</option>
+                    <option value="quadricipiti">Quadricipiti</option>
+                    <option value="spalle">Spalle</option>
+                    <option value="tricipiti">Tricipiti</option>
+                </select>
+                <div class="modal-actions">
+                    <button type="submit" class="btn-primary">Salva Modifiche</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <nav class="bottom-nav">

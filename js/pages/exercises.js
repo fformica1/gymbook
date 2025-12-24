@@ -1,25 +1,127 @@
 window.setupEserciziPage = function() {
     console.log("Setup Esercizi Page (Nuova Struttura)");
-    const form = document.querySelector('#form-crea-esercizio');
     const listaEserciziDiv = document.querySelector('#lista-esercizi');
     const filterSelect = document.querySelector('#filter-gruppo');
+    
+    // --- Inizializzazione Esercizi Default (Se lista vuota) ---
+    const currentExercises = getFromLocalStorage('elencoEsercizi');
+    if (!currentExercises || currentExercises.length === 0) {
+        const defaultExercises = [
+            { id: 'def_1', nome: 'Panca Piana', gruppo: 'petto' },
+            { id: 'def_2', nome: 'Panca Inclinata', gruppo: 'petto' },
+            { id: 'def_3', nome: 'Croci ai Cavi', gruppo: 'petto' },
+            { id: 'def_4', nome: 'Dip', gruppo: 'petto' },
+            { id: 'def_5', nome: 'Trazioni', gruppo: 'dorso' },
+            { id: 'def_6', nome: 'Rematore con Bilanciere', gruppo: 'dorso' },
+            { id: 'def_7', nome: 'Lat Machine', gruppo: 'dorso' },
+            { id: 'def_8', nome: 'Pulley', gruppo: 'dorso' },
+            { id: 'def_9', nome: 'Squat', gruppo: 'quadricipiti' },
+            { id: 'def_10', nome: 'Leg Press', gruppo: 'quadricipiti' },
+            { id: 'def_11', nome: 'Affondi', gruppo: 'quadricipiti' },
+            { id: 'def_12', nome: 'Leg Extension', gruppo: 'quadricipiti' },
+            { id: 'def_13', nome: 'Stacco da Terra', gruppo: 'dorso' },
+            { id: 'def_14', nome: 'Leg Curl', gruppo: 'femorali' },
+            { id: 'def_15', nome: 'Stacchi Rumeni', gruppo: 'femorali' },
+            { id: 'def_16', nome: 'Military Press', gruppo: 'spalle' },
+            { id: 'def_17', nome: 'Alzate Laterali', gruppo: 'spalle' },
+            { id: 'def_18', nome: 'Alzate Posteriori', gruppo: 'spalle' },
+            { id: 'def_19', nome: 'Face Pull', gruppo: 'spalle' },
+            { id: 'def_20', nome: 'Curl con Bilanciere', gruppo: 'bicipiti' },
+            { id: 'def_21', nome: 'Curl con Manubri', gruppo: 'bicipiti' },
+            { id: 'def_22', nome: 'Curl Hammer', gruppo: 'bicipiti' },
+            { id: 'def_23', nome: 'Pushdown', gruppo: 'tricipiti' },
+            { id: 'def_24', nome: 'French Press', gruppo: 'tricipiti' },
+            { id: 'def_25', nome: 'Overhead Extention', gruppo: 'tricipiti' },
+            { id: 'def_26', nome: 'Calf Raise in Piedi', gruppo: 'polpacci' },
+            { id: 'def_27', nome: 'Calf Raise Seduto', gruppo: 'polpacci' },
+            { id: 'def_28', nome: 'Crunch', gruppo: 'core' },
+            { id: 'def_29', nome: 'Plank', gruppo: 'core' },
+            { id: 'def_30', nome: 'Leg Raise', gruppo: 'core' },
+            { id: 'def_31', nome: 'T-Bar', gruppo: 'dorso' },
+            { id: 'def_32', nome: 'Spinte Panca Piana', gruppo: 'petto' },
+            { id: 'def_33', nome: 'Spinte Panca Inclinata', gruppo: 'petto' },
+            { id: 'def_34', nome: 'Chest Press', gruppo: 'petto' },
+            { id: 'def_35', nome: 'Lento Avanti', gruppo: 'spalle' },
+            { id: 'def_36', nome: 'Shoulder Press', gruppo: 'spalle' }
+        ];
+        saveToLocalStorage('elencoEsercizi', defaultExercises);
+    }
+
+    // --- Gestione Parametri URL e Stato ---
+    const params = new URLSearchParams(window.location.search);
+    const selectionMode = params.get('mode') === 'selection';
+    const pianoId = params.get('pianoId');
+    const routineId = params.get('routineId');
+    const selectedExercises = new Set();
+
+    // Modals
+    const createModal = document.querySelector('#create-exercise-modal');
+    const btnOpenCreate = document.querySelector('#btn-open-create-modal');
     const editModal = document.querySelector('#edit-exercise-modal');
     const editForm = document.querySelector('#form-modifica-esercizio');
 
+    // Configurazione UI per Modalità Selezione
+    if (selectionMode && pianoId && routineId) {
+        // 1. Nascondi la barra di navigazione inferiore
+        const bottomNav = document.querySelector('.bottom-nav');
+        if (bottomNav) bottomNav.style.display = 'none';
+
+        // 2. Cambia il tasto indietro per tornare alla routine
+        const backBtn = document.querySelector('.header-icon-left');
+        if (backBtn) backBtn.href = `routine-dettaglio.html?pianoId=${pianoId}&routineId=${routineId}`;
+
+        // 3. Aggiungi Footer per la conferma (fisso in basso)
+        const footer = document.createElement('div');
+        footer.id = 'selection-footer';
+        footer.style.cssText = "position: fixed; bottom: 0; left: 0; right: 0; padding: 20px; background: var(--card-bg); border-top: 1px solid var(--border-light); z-index: 1001; display: none; box-shadow: 0 -5px 15px rgba(0,0,0,0.2);";
+        footer.innerHTML = `<button id="confirm-selection" class="btn-primary" style="width: 100%;">Aggiungi Esercizi</button>`;
+        document.body.appendChild(footer);
+
+        // 4. Logica di conferma aggiunta
+        document.getElementById('confirm-selection').addEventListener('click', () => {
+            let piani = getFromLocalStorage('pianiDiAllenamento');
+            const routine = piani.find(p => p.id === pianoId).routine.find(r => r.id === routineId);
+            const allExercises = getFromLocalStorage('elencoEsercizi') || [];
+            
+            selectedExercises.forEach(id => {
+                const ex = allExercises.find(e => e.id === id);
+                if (ex) {
+                    routine.esercizi.push({
+                        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+                        esercizioId: ex.id,
+                        nome: ex.nome,
+                        note: "",
+                        recupero: 90,
+                        serie: [{ kg: '', reps: '' }]
+                    });
+                }
+            });
+            saveToLocalStorage('pianiDiAllenamento', piani);
+            window.location.href = `routine-dettaglio.html?pianoId=${pianoId}&routineId=${routineId}`;
+        });
+    }
+
     renderEsercizi();
 
-    form.addEventListener('submit', (event) => {
-        event.preventDefault();
-        const nome = document.querySelector('#nome-esercizio').value.trim();
-        const gruppo = document.querySelector('#gruppo-muscolare').value;
-        if (nome) {
-            let esercizi = getFromLocalStorage('elencoEsercizi') || [];
-            esercizi.push({ id: Date.now().toString(), nome, gruppo });
-            saveToLocalStorage('elencoEsercizi', esercizi);
-            document.querySelector('#nome-esercizio').value = '';
-            renderEsercizi();
-        }
-    });
+    // Gestione Creazione
+    if (btnOpenCreate && createModal) {
+        btnOpenCreate.addEventListener('click', () => createModal.style.display = 'flex');
+        createModal.querySelector('.close-modal').addEventListener('click', () => createModal.style.display = 'none');
+        
+        createModal.querySelector('#form-crea-esercizio-modal').addEventListener('submit', (event) => {
+            event.preventDefault();
+            const nome = document.querySelector('#nome-esercizio-modal').value.trim();
+            const gruppo = document.querySelector('#gruppo-muscolare-modal').value;
+            if (nome) {
+                let esercizi = getFromLocalStorage('elencoEsercizi') || [];
+                esercizi.push({ id: Date.now().toString(), nome, gruppo });
+                saveToLocalStorage('elencoEsercizi', esercizi);
+                document.querySelector('#nome-esercizio-modal').value = '';
+                createModal.style.display = 'none';
+                renderEsercizi();
+            }
+        });
+    }
 
     if (filterSelect) filterSelect.addEventListener('change', renderEsercizi);
 
@@ -38,6 +140,28 @@ window.setupEserciziPage = function() {
                     esercizi[idx].nome = newName;
                     esercizi[idx].gruppo = newGroup;
                     saveToLocalStorage('elencoEsercizi', esercizi);
+
+                    // --- PROPAGAZIONE MODIFICA ALLE ROUTINE ---
+                    let piani = getFromLocalStorage('pianiDiAllenamento') || [];
+                    let pianiModificati = false;
+
+                    piani.forEach(piano => {
+                        if (piano.routine) {
+                            piano.routine.forEach(r => {
+                                if (r.esercizi) {
+                                    r.esercizi.forEach(exRoutine => {
+                                        if (exRoutine.esercizioId === id) {
+                                            exRoutine.nome = newName;
+                                            pianiModificati = true;
+                                        }
+                                    });
+                                }
+                            });
+                        }
+                    });
+                    if (pianiModificati) saveToLocalStorage('pianiDiAllenamento', piani);
+                    // ------------------------------------------
+
                     renderEsercizi();
                     editModal.style.display = 'none';
                 }
@@ -54,10 +178,43 @@ window.setupEserciziPage = function() {
         if (esercizi.length === 0) { listaEserciziDiv.innerHTML = '<p>Nessun esercizio trovato.</p>'; return; }
 
         esercizi.forEach(ex => {
+            const isChecked = selectedExercises.has(ex.id);
             const div = document.createElement('div');
             div.className = 'list-item-container';
-            div.innerHTML = `<div class="title-link" style="cursor: pointer;"><h3>${ex.nome} <small style="color: var(--text-dim); font-size: 0.8em;">(${ex.gruppo})</small></h3></div><button data-id="${ex.id}" class="btn-elimina-esercizio" style="background:none; border:none; padding:0; cursor:pointer; color: var(--danger);"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:24px; height:24px; pointer-events: none;"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg></button>`;
-            div.querySelector('.title-link').addEventListener('click', () => {
+            div.style.cssText = "display: flex; align-items: center; justify-content: space-between; padding: 6px 10px;";
+            div.innerHTML = `
+                <label style="display: flex; align-items: center; flex-grow: 1; margin: 0; cursor: ${selectionMode ? 'pointer' : 'default'};">
+                    ${selectionMode ? `<input type="checkbox" data-id="${ex.id}" ${isChecked ? 'checked' : ''} style="transform: scale(1.3); margin-right: 12px;">` : ''}
+                    <div style="display: flex; flex-direction: column;">
+                        <span class="exercise-name">${ex.nome}</span>
+                        <span class="exercise-group">${ex.gruppo}</span>
+                    </div>
+                </label>
+                <div class="item-actions" style="display: flex; align-items: center; gap: 0px; flex-shrink: 0;">
+                    <button data-id="${ex.id}" class="btn-icon btn-edit-esercizio" style="background:none; border:none; cursor:pointer; color: var(--accent); padding: 5px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:22px; height:22px;"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg>
+                    </button>
+                    <button data-id="${ex.id}" class="btn-icon btn-elimina-esercizio" style="background:none; border:none; cursor:pointer; color: var(--danger); padding: 5px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:22px; height:22px; pointer-events: none;"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg>
+                    </button>
+                </div>
+            `;
+            
+            // Gestione Checkbox (solo in selection mode)
+            if (selectionMode) {
+                const checkbox = div.querySelector('input[type="checkbox"]');
+                checkbox.addEventListener('change', (e) => {
+                    if (e.target.checked) selectedExercises.add(ex.id);
+                    else selectedExercises.delete(ex.id);
+                    
+                    const footer = document.getElementById('selection-footer');
+                    const btn = document.getElementById('confirm-selection');
+                    footer.style.display = selectedExercises.size > 0 ? 'block' : 'none';
+                    if (btn) btn.textContent = `Aggiungi ${selectedExercises.size} Esercizi`;
+                });
+            }
+
+            div.querySelector('.btn-edit-esercizio').addEventListener('click', () => {
                 document.querySelector('#edit-esercizio-id').value = ex.id;
                 document.querySelector('#edit-nome-esercizio').value = ex.nome;
                 document.querySelector('#edit-gruppo-muscolare').value = ex.gruppo;

@@ -133,3 +133,23 @@ body {
 [data-theme="dark"] .recovery-timer button {
     color: #ffffff !important;
 }
+
+/* --- Fix Specifici Pagine --- */
+#lista-esercizi-routine textarea {
+    font-size: 14px !important;
+}
+
+/* --- Stili Lista Esercizi --- */
+.exercise-name {
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--text); /* Si adatta automaticamente al tema */
+}
+
+.exercise-group {
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-top: 2px;
+    text-transform: capitalize;
+}

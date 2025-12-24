@@ -118,7 +118,8 @@
 }
 
 .workout-header.timer-finished .routine-title,
-.workout-header.timer-finished .workout-timer {
+.workout-header.timer-finished .workout-timer,
+.workout-header.timer-finished .btn-back-arrow {
     color: #ffffff !important;
 }
 
@@ -251,6 +252,8 @@ input[type="number"].recovery-input {
     display: flex;
     align-items: center;
     justify-content: center;
+    min-width: 0;
+    overflow: hidden;
 }
 
 .set-inputs {
@@ -308,6 +311,15 @@ input.set-input {
     padding: 15px;
     border-radius: 12px;
     margin-top: 20px;
+}
+
+[data-theme="light"] .workout-settings-container .setting-row {
+    background-color: rgba(0, 0, 0, 0.05) !important;
+    border: 1px solid var(--border-light);
+}
+
+[data-theme="light"] .workout-settings-container .setting-row label {
+    color: #000000 !important;
 }
 
 .workout-settings-container label {

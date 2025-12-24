@@ -41,6 +41,15 @@
                     </select>
                 </div>
             </div>
+
+            <div class="list-item-container" style="display: block; margin-top: 30px;">
+                <button id="btn-reset-app" style="width: 100%; padding: 15px; background-color: #ff453a; color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer;">
+                    Resetta Memoria App
+                </button>
+                <p style="text-align: center; color: var(--text-dim); font-size: 0.85rem; margin-top: 10px;">
+                    Attenzione: questa azione cancellerà tutti i tuoi dati (piani, routine, progressi) e non può essere annullata.
+                </p>
+            </div>
         </section>
 
         <section style="margin-top: 20px; text-align: center; color: var(--text-dim);">
@@ -60,6 +69,18 @@
             if (weightSelect) {
                 weightSelect.value = localStorage.getItem('weightIncrement') || '2.5';
                 weightSelect.addEventListener('change', (e) => localStorage.setItem('weightIncrement', e.target.value));
+            }
+
+            // Gestione Reset App
+            const btnReset = document.getElementById('btn-reset-app');
+            if (btnReset) {
+                btnReset.addEventListener('click', () => {
+                    const conferma = confirm("SEI SICURO?\n\nQuesta azione cancellerà TUTTI i dati salvati (Piani, Routine, Storico) e riporterà l'app allo stato iniziale.\n\nL'azione è irreversibile.");
+                    if (conferma) {
+                        localStorage.clear(); // Cancella tutta la memoria
+                        window.location.href = 'index.html'; // Riavvia l'app tornando alla home
+                    }
+                });
             }
         });
     </script>

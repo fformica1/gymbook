@@ -21,6 +21,11 @@ document.addEventListener('DOMContentLoaded', () => {
         return false;
     };
 
+    // --- Disabilita Pinch-to-Zoom (iOS Safari ignora user-scalable=no) ---
+    document.addEventListener('gesturestart', function(e) {
+        e.preventDefault();
+    });
+
     // Funzione per determinare la pagina corrente
     const getCurrentPage = () => {
         const path = window.location.pathname;

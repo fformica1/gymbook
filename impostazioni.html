@@ -7,8 +7,8 @@
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" href="icon-browser.png">
     <link rel="apple-touch-icon" href="icon.png">
-    <link rel="stylesheet" href="css/global.css?v=1.2">
-    <link rel="stylesheet" href="css/components.css?v=1.2">
+    <link rel="stylesheet" href="css/global.css?v=1.3">
+    <link rel="stylesheet" href="css/components.css?v=1.3">
 </head>
 <body>
     <header class="app-header">
@@ -44,6 +44,15 @@
                 </div>
             </div>
 
+            <div class="list-item-container" style="display: block; margin-top: 20px;">
+                <button id="btn-update-app" style="width: 100%; padding: 15px; background-color: var(--card-bg); border: 1px solid var(--accent); color: var(--accent); border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer;">
+                    Aggiorna App
+                </button>
+                <p style="text-align: center; color: var(--text-dim); font-size: 0.85rem; margin-top: 10px;">
+                    Pulisce la cache e scarica l'ultima versione disponibile.
+                </p>
+            </div>
+
             <div class="list-item-container" style="display: block; margin-top: 30px;">
                 <button id="btn-reset-app" style="width: 100%; padding: 15px; background-color: #ff453a; color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer;">
                     Resetta Memoria App
@@ -55,15 +64,15 @@
         </section>
 
         <section style="margin-top: 20px; text-align: center; color: var(--text-dim);">
-            <p>GymBook v1.2</p>
+            <p>GymBook v1.3</p>
         </section>
     </div>
 
     <!-- La navbar non serve nella pagina impostazioni -->
 
-    <script src="js/utils.js?v=1.2"></script>
-    <script src="js/pages/settings.js?v=1.2"></script>
-    <script src="js/main.js?v=1.2"></script>
+    <script src="js/utils.js?v=1.3"></script>
+    <script src="js/pages/settings.js?v=1.3"></script>
+    <script src="js/main.js?v=1.3"></script>
     <script>
         // Script inline per gestire il salvataggio dell'incremento peso
         document.addEventListener('DOMContentLoaded', () => {

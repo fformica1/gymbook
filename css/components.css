@@ -97,14 +97,37 @@ article,
     border-bottom: none;
 }
 
-.list-item-container.dragging {
-    opacity: 0.5;
+.list-item-container.dragging,
+.esercizio-card.dragging {
+    opacity: 0.9;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+    z-index: 9999;
+    pointer-events: none; /* Fondamentale: permette di "vedere attraverso" l'elemento trascinato per capire dove posizionarlo */
+    background-color: var(--card-bg);
+}
+
+/* --- Modalità Ordinamento (Compact Mode) --- */
+#lista-esercizi-routine.sorting-mode .esercizio-card > :not(.esercizio-card-header) {
+    display: none !important;
+}
+
+#lista-esercizi-routine.sorting-mode .esercizio-card {
+    padding-bottom: 15px;
+    margin-bottom: 10px;
+}
+
+.sortable-placeholder {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    border: 2px dashed var(--border-light);
+    box-sizing: border-box;
 }
 
 .drag-handle {
     cursor: grab;
     padding-right: 15px;
     color: var(--text-dim);
+    touch-action: none; /* Fondamentale: impedisce lo scroll della pagina quando si tocca la maniglia */
 }
 .drag-handle svg {
     width: 24px;

@@ -22,6 +22,16 @@
 /* Reset globale per comportamento "App-like" (rimuove highlight al tocco su tutto) */
 * {
     -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none; /* Disabilita menu contestuale (copia/incolla/link) al tocco prolungato */
+    user-select: none; /* Disabilita la selezione del testo nell'interfaccia */
+    -webkit-user-select: none;
+}
+
+/* Riabilita l'interazione per i campi di input */
+input, textarea, [contenteditable] {
+    user-select: text;
+    -webkit-user-select: text;
+    cursor: text;
 }
 
 body {
@@ -31,6 +41,12 @@ body {
     margin: 0;
     padding: 0;
     padding-bottom: 100px;
+    overscroll-behavior-y: none; /* Previene il rimbalzo elastico della pagina (rubber-banding) */
+}
+
+/* Nasconde le scrollbar per un look più pulito (come un'app nativa) */
+::-webkit-scrollbar {
+    display: none;
 }
 
 .content-wrapper {
@@ -137,6 +153,10 @@ body {
 /* --- Fix Specifici Pagine --- */
 #lista-esercizi-routine textarea {
     font-size: 14px !important;
+}
+
+#lista-esercizi-routine input {
+    color: var(--text) !important;
 }
 
 /* --- Stili Lista Esercizi --- */

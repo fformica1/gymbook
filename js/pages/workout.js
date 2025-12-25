@@ -289,6 +289,13 @@ window.setupAllenamentoPage = function() {
     });
     container.addEventListener('change', (e) => {
         if (e.target.classList.contains('set-check')) {
+            // Avvia il timer e l'allenamento effettivo solo al primo check
+            if (!getFromLocalStorage('workoutStartTime')) {
+                saveToLocalStorage('workoutStartTime', Date.now());
+                saveToLocalStorage('activeWorkout', { pianoId, routineId });
+                startWorkoutTimer();
+            }
+
             saveCurrentWorkoutState();
             const row = e.target.closest('.set-row');
             if (e.target.checked) {
@@ -346,13 +353,19 @@ window.setupAllenamentoPage = function() {
     // Timer Functions
     function startWorkoutTimer() {
         let startTime = getFromLocalStorage('workoutStartTime');
-        if (!startTime) { startTime = Date.now(); saveToLocalStorage('workoutStartTime', startTime); }
+        
+        if (!startTime) {
+            workoutTimerEl.textContent = "00:00";
+            return;
+        }
+
         saveToLocalStorage('activeWorkout', { pianoId, routineId });
         const updateTimer = () => {
             const totalSeconds = Math.floor((Date.now() - startTime) / 1000);
             workoutTimerEl.textContent = `${String(Math.floor(totalSeconds / 3600)).padStart(2, '0')}:${String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0')}`;
         };
         updateTimer();
+        if (workoutInterval) clearInterval(workoutInterval);
         workoutInterval = setInterval(updateTimer, 1000);
     }
 

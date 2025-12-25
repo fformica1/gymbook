@@ -80,8 +80,10 @@ function setupRoutineDettaglio(pianoId, routineId) {
     // --- Initial UI setup ---
     document.body.classList.add('page-routine-dettaglio');
     const listaEserciziRoutineDiv = document.querySelector('#lista-esercizi-routine');
+
     aggiornaTitolo();
     renderEserciziRoutine();
+    initDragAndDrop();
 
     // --- Main View Event Listener ---
     routineDetailsView.addEventListener('click', (e) => {
@@ -183,6 +185,7 @@ function setupRoutineDettaglio(pianoId, routineId) {
     function renderEserciziRoutine() {
         const piani = getFromLocalStorage('pianiDiAllenamento');
         const routine = piani.find(p => p.id === pianoId).routine.find(r => r.id === routineId);
+
         listaEserciziRoutineDiv.innerHTML = '';
         routine.esercizi.forEach(ex => {
             const serieHtml = ex.serie.map((s, i) => `<div class="set-row"><span class="set-number">${i + 1}</span><div class="set-inputs"><div class="adjust-control"><button class="btn-weight-adjust" data-adjust="-2.5">-</button><input type="number" class="set-input weight-input" value="${s.kg}" inputmode="decimal" step="any"><button class="btn-weight-adjust" data-adjust="2.5">+</button></div><div class="adjust-control"><button class="btn-reps-adjust" data-adjust="-1">-</button><input type="number" class="set-input reps-input" value="${s.reps}" inputmode="numeric"><button class="btn-reps-adjust" data-adjust="1">+</button></div></div></div>`).join('');
@@ -209,12 +212,13 @@ function setupRoutineDettaglio(pianoId, routineId) {
                     </div>
                 </div>`;
 
+            const deleteBtnHtml = `<button class="btn-elimina" data-id="${ex.id}" style="background:none; border:none; padding:0; cursor:pointer; color: var(--danger);"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:24px; height:24px; pointer-events: none;"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg></button>`;
+
             const card = document.createElement('article');
             card.className = 'esercizio-card';
             card.dataset.id = ex.id;
-            card.innerHTML = `<div class="esercizio-card-header"><div style="display: flex; align-items: center;"><span class="drag-handle"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg></span><h2>${ex.nome}</h2></div><button class="btn-elimina" data-id="${ex.id}" style="background:none; border:none; padding:0; cursor:pointer; color: var(--danger);"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:24px; height:24px; pointer-events: none;"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg></button></div><div class="exercise-details"><textarea placeholder="Note" class="auto-expand">${ex.note}</textarea></div><div class="recovery-time-display"><span>Tempo di Recupero: <input type="number" class="recovery-input" value="${ex.recupero}" inputmode="numeric"> s</span></div><div class="sets-header"><span class="set-number-header">Set</span><div class="set-inputs-header"><span>Kg</span><span>Reps</span></div></div><div class="sets-container">${serieHtml}</div>${quickAdjustHtml}`;
+            card.innerHTML = `<div class="esercizio-card-header"><div style="display: flex; align-items: center;"><span class="drag-handle"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg></span><h2>${ex.nome}</h2></div>${deleteBtnHtml}</div><div class="exercise-details"><textarea placeholder="Note" class="auto-expand">${ex.note}</textarea></div><div class="recovery-time-display"><span>Tempo di Recupero: <input type="number" class="recovery-input" value="${ex.recupero}" inputmode="numeric"> s</span></div><div class="sets-header"><span class="set-number-header">Set</span><div class="set-inputs-header"><span>Kg</span><span>Reps</span></div></div><div class="sets-container">${serieHtml}</div>${quickAdjustHtml}`;
             listaEserciziRoutineDiv.appendChild(card);
-            listaEserciziRoutineDiv.appendChild(document.createElement('hr'));
         });
         
         listaEserciziRoutineDiv.querySelectorAll('textarea').forEach(tx => {
@@ -226,6 +230,7 @@ function setupRoutineDettaglio(pianoId, routineId) {
     function aggiornaTitolo() {
         const piani = getFromLocalStorage('pianiDiAllenamento');
         const routine = piani.find(p => p.id === pianoId).routine.find(r => r.id === routineId);
+        
         document.querySelector('#titolo-dettaglio-routine').innerHTML = `${routine.nome} <span style="white-space: nowrap;"><button id="btn-edit-routine-name" style="background:none; border:none; padding:0; cursor:pointer; vertical-align: middle; margin-left: 8px; color: var(--accent);"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:24px; height:24px;"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg></button><button id="btn-delete-routine" style="background:none; border:none; padding:0; cursor:pointer; vertical-align: middle; margin-left: 8px; color: var(--danger);"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:24px; height:24px;"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg></button></span>`;
         
         document.querySelector('#btn-edit-routine-name').addEventListener('click', () => {
@@ -233,6 +238,12 @@ function setupRoutineDettaglio(pianoId, routineId) {
             if (newName && newName.trim()) { routine.nome = newName.trim(); saveToLocalStorage('pianiDiAllenamento', piani); aggiornaTitolo(); }
         });
         document.querySelector('#btn-delete-routine').addEventListener('click', () => {
+            const activeWorkout = getFromLocalStorage('activeWorkout');
+            if (activeWorkout && activeWorkout.pianoId === pianoId && activeWorkout.routineId === routineId) {
+                alert("Impossibile eliminare la routine mentre è in corso un allenamento basato su di essa.");
+                return;
+            }
+
             if (confirm("Eliminare routine?")) {
                 const p = piani.find(p => p.id === pianoId);
                 p.routine = p.routine.filter(r => r.id !== routineId);
@@ -240,5 +251,189 @@ function setupRoutineDettaglio(pianoId, routineId) {
                 window.location.href = `routine.html?pianoId=${pianoId}`;
             }
         });
+    }
+
+    function initDragAndDrop() {
+        const list = listaEserciziRoutineDiv;
+        let draggingItem = null;
+        let placeholder = null;
+        let isDragging = false;
+        let currentClientY = 0;
+        let dragOffsetY = 0; // Offset per mantenere l'elemento sotto il dito nello stesso punto
+        const scrollThreshold = 100; // Distanza dal bordo per attivare lo scroll
+        const maxScrollSpeed = 20;   // Velocità massima di scroll
+
+        const updateOrder = (clientY) => {
+            if (!placeholder) return;
+            // Sposta il placeholder, non l'elemento trascinato
+            const siblings = [...list.querySelectorAll('.esercizio-card:not(.dragging)')];
+            const nextSibling = siblings.find(sibling => {
+                const box = sibling.getBoundingClientRect();
+                return clientY <= box.top + box.height / 2;
+            });
+            list.insertBefore(placeholder, nextSibling || null);
+        };
+
+        const autoScroll = () => {
+            if (!isDragging) return;
+
+            const viewportHeight = window.innerHeight;
+            let scrollAmount = 0;
+
+            if (currentClientY < scrollThreshold) {
+                // Scroll verso l'alto
+                scrollAmount = -maxScrollSpeed * ((scrollThreshold - currentClientY) / scrollThreshold);
+            } else if (currentClientY > viewportHeight - scrollThreshold) {
+                // Scroll verso il basso
+                scrollAmount = maxScrollSpeed * ((currentClientY - (viewportHeight - scrollThreshold)) / scrollThreshold);
+            }
+
+            if (scrollAmount !== 0) {
+                window.scrollBy(0, scrollAmount);
+                // Aggiorna la posizione dell'elemento fluttuante durante lo scroll
+                if (draggingItem) {
+                    draggingItem.style.top = `${currentClientY - dragOffsetY}px`;
+                }
+                updateOrder(currentClientY); // Aggiorna l'ordine anche mentre scorre
+            }
+
+            requestAnimationFrame(autoScroll);
+        };
+
+        const cleanup = () => {
+            isDragging = false;
+            
+            if (draggingItem) {
+                draggingItem.classList.remove('dragging');
+                draggingItem.style.position = '';
+                draggingItem.style.top = '';
+                draggingItem.style.left = '';
+                draggingItem.style.width = '';
+                draggingItem.style.zIndex = '';
+                draggingItem.style.boxSizing = '';
+                draggingItem = null;
+            }
+
+            if (placeholder && placeholder.parentNode) {
+                placeholder.remove();
+            }
+            placeholder = null;
+
+            list.classList.remove('sorting-mode');
+            list.style.minHeight = ''; // Rimuove il blocco altezza
+
+            document.removeEventListener('mousemove', handleMove);
+            document.removeEventListener('touchmove', handleMove);
+            document.removeEventListener('mouseup', handleEnd);
+            document.removeEventListener('touchend', handleEnd);
+            document.removeEventListener('touchcancel', handleEnd);
+        };
+
+        const handleStart = (e) => {
+            if (isDragging) return;
+
+            const handle = e.target.closest('.drag-handle');
+            if (!handle) return;
+            
+            // Previeni lo scroll nativo solo se è un evento touch cancellabile
+            if (e.type === 'touchstart' && e.cancelable) e.preventDefault();
+
+            const card = handle.closest('.esercizio-card');
+            if (!card) return;
+
+            try {
+                draggingItem = card;
+                isDragging = true;
+                
+                // Blocca l'altezza della lista per evitare salti di scroll quando le card si riducono
+                list.style.minHeight = `${list.offsetHeight}px`;
+
+                // 1. Calcola offset PRIMA di collassare
+                const startRect = card.getBoundingClientRect();
+                const touch = e.touches ? e.touches[0] : e;
+                const touchY = touch.clientY;
+                dragOffsetY = touchY - startRect.top;
+
+                // 2. Attiva modalità compatta
+                list.classList.add('sorting-mode');
+
+                // 3. Ricalcola dimensioni sulla versione collassata
+                const rect = card.getBoundingClientRect();
+
+                placeholder = document.createElement('div');
+                placeholder.className = 'sortable-placeholder';
+                placeholder.style.height = `${rect.height}px`;
+                placeholder.style.marginBottom = window.getComputedStyle(card).marginBottom;
+                card.parentNode.insertBefore(placeholder, card);
+
+                card.style.position = 'fixed';
+                card.style.top = `${touchY - dragOffsetY}px`;
+                card.style.left = `${rect.left}px`;
+                card.style.width = `${rect.width}px`;
+                card.style.boxSizing = 'border-box';
+                card.style.zIndex = '9999';
+                card.classList.add('dragging');
+
+                // Scroll immediato in alto per mostrare la lista compattata ed evitare schermate nere
+                window.scrollTo({ top: 0, behavior: 'auto' });
+
+                currentClientY = touchY;
+                requestAnimationFrame(autoScroll);
+
+                document.addEventListener('mousemove', handleMove);
+                document.addEventListener('touchmove', handleMove, { passive: false });
+                document.addEventListener('mouseup', handleEnd);
+                document.addEventListener('touchend', handleEnd);
+                document.addEventListener('touchcancel', handleEnd);
+            } catch (err) {
+                console.error("Errore avvio drag:", err);
+                cleanup();
+            }
+        };
+
+        const handleMove = (e) => {
+            if (!isDragging) return;
+            if (e.cancelable) e.preventDefault();
+
+            const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+            currentClientY = clientY;
+            
+            // Muove l'elemento visivamente
+            if (draggingItem) {
+                draggingItem.style.top = `${clientY - dragOffsetY}px`;
+            }
+            
+            updateOrder(clientY);
+        };
+
+        const handleEnd = () => {
+            if (!isDragging) return;
+            
+            // Ripristina l'elemento al posto del placeholder
+            if (draggingItem && placeholder && placeholder.parentNode) {
+                placeholder.parentNode.insertBefore(draggingItem, placeholder);
+            }
+
+            // Salva il nuovo ordine
+            const newOrderIds = [...list.querySelectorAll('.esercizio-card')].map(c => c.dataset.id);
+            let piani = getFromLocalStorage('pianiDiAllenamento');
+            const routine = piani.find(p => p.id === pianoId).routine.find(r => r.id === routineId);
+            
+            const newExercises = [];
+            newOrderIds.forEach(id => {
+                const ex = routine.esercizi.find(e => e.id === id);
+                if (ex) newExercises.push(ex);
+            });
+            
+            if (newExercises.length === routine.esercizi.length) {
+                routine.esercizi = newExercises;
+                saveToLocalStorage('pianiDiAllenamento', piani);
+            }
+
+            cleanup();
+        };
+
+        list.addEventListener('mousedown', handleStart);
+        list.addEventListener('touchstart', handleStart, { passive: false });
     }
 }

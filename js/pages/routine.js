@@ -40,28 +40,47 @@ function setupRoutineList(pianoId) {
         const piano = piani.find(p => p.id === pianoId);
         if (!piano) return;
 
-        titoloPagina.innerHTML = `${piano.nome} <span style="white-space: nowrap;"><button id="btn-edit-piano-name" style="background:none; border:none; padding:0; cursor:pointer; vertical-align: middle; margin-left: 8px; color: var(--accent);"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:24px; height:24px;"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg></button><button id="btn-delete-piano" style="background:none; border:none; padding:0; cursor:pointer; vertical-align: middle; margin-left: 8px; color: var(--danger);"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:24px; height:24px;"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg></button></span>`;
-
-        document.querySelector('#btn-edit-piano-name').addEventListener('click', () => {
-            const newName = prompt("Modifica nome del piano:", piano.nome);
-            if (newName && newName.trim()) { piano.nome = newName.trim(); saveToLocalStorage('pianiDiAllenamento', piani); renderRoutines(); }
-        });
-        document.querySelector('#btn-delete-piano').addEventListener('click', () => {
-            if (confirm("Eliminare piano?")) {
-                piani = piani.filter(p => p.id !== pianoId);
-                saveToLocalStorage('pianiDiAllenamento', piani);
-                if (getFromLocalStorage('activePianoId') === pianoId) localStorage.removeItem('activePianoId');
-                window.location.href = 'piani.html';
-            }
-        });
+        titoloPagina.innerHTML = piano.nome;
 
         listaRoutine.innerHTML = '';
         if (piano.routine.length === 0) { listaRoutine.innerHTML = '<p>Nessuna routine creata.</p>'; return; }
         piano.routine.forEach(r => {
             const routineDiv = document.createElement('div');
             routineDiv.className = 'list-item-container';
-            routineDiv.innerHTML = `<a href="routine-dettaglio.html?pianoId=${pianoId}&routineId=${r.id}" class="title-link"><h3>${r.nome}</h3></a>`;
+            routineDiv.innerHTML = `
+                <a href="routine-dettaglio.html?pianoId=${pianoId}&routineId=${r.id}" class="title-link"><h3>${r.nome}</h3></a>
+                <div style="display: flex; align-items: center;">
+                    <button class="btn-edit-routine" data-id="${r.id}" style="background:none; border:none; padding:5px; cursor:pointer; color: var(--accent);"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:24px; height:24px;"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg></button>
+                    <button class="btn-delete-routine" data-id="${r.id}" style="background:none; border:none; padding:5px; cursor:pointer; color: var(--danger);"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:24px; height:24px;"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg></button>
+                </div>`;
             listaRoutine.appendChild(routineDiv);
+        });
+
+        listaRoutine.querySelectorAll('.btn-edit-routine').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const id = e.currentTarget.dataset.id;
+                const r = piano.routine.find(rt => rt.id === id);
+                if (r) {
+                    const newName = prompt("Modifica nome routine:", r.nome);
+                    if (newName && newName.trim()) { r.nome = newName.trim(); saveToLocalStorage('pianiDiAllenamento', piani); renderRoutines(); }
+                }
+            });
+        });
+
+        listaRoutine.querySelectorAll('.btn-delete-routine').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const id = e.currentTarget.dataset.id;
+                const activeWorkout = getFromLocalStorage('activeWorkout');
+                if (activeWorkout && activeWorkout.pianoId === pianoId && activeWorkout.routineId === id) {
+                    alert("Impossibile eliminare la routine mentre è in corso un allenamento basato su di essa.");
+                    return;
+                }
+                if (confirm("Eliminare routine?")) {
+                    piano.routine = piano.routine.filter(r => r.id !== id);
+                    saveToLocalStorage('pianiDiAllenamento', piani);
+                    renderRoutines();
+                }
+            });
         });
     }
 }
@@ -75,7 +94,13 @@ function setupRoutineDettaglio(pianoId, routineId) {
     
     // Configura il tasto indietro per puntare sempre alla lista routine del piano corrente
     const btnBack = document.querySelector('#btn-back');
-    if (btnBack) btnBack.href = `routine.html?pianoId=${pianoId}`;
+    if (btnBack) {
+        if (new URLSearchParams(window.location.search).get('from') === 'home') {
+            btnBack.href = 'index.html';
+        } else {
+            btnBack.href = `routine.html?pianoId=${pianoId}`;
+        }
+    }
 
     // --- Initial UI setup ---
     document.body.classList.add('page-routine-dettaglio');
@@ -230,27 +255,7 @@ function setupRoutineDettaglio(pianoId, routineId) {
     function aggiornaTitolo() {
         const piani = getFromLocalStorage('pianiDiAllenamento');
         const routine = piani.find(p => p.id === pianoId).routine.find(r => r.id === routineId);
-        
-        document.querySelector('#titolo-dettaglio-routine').innerHTML = `${routine.nome} <span style="white-space: nowrap;"><button id="btn-edit-routine-name" style="background:none; border:none; padding:0; cursor:pointer; vertical-align: middle; margin-left: 8px; color: var(--accent);"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:24px; height:24px;"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg></button><button id="btn-delete-routine" style="background:none; border:none; padding:0; cursor:pointer; vertical-align: middle; margin-left: 8px; color: var(--danger);"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:24px; height:24px;"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg></button></span>`;
-        
-        document.querySelector('#btn-edit-routine-name').addEventListener('click', () => {
-            const newName = prompt("Modifica nome routine:", routine.nome);
-            if (newName && newName.trim()) { routine.nome = newName.trim(); saveToLocalStorage('pianiDiAllenamento', piani); aggiornaTitolo(); }
-        });
-        document.querySelector('#btn-delete-routine').addEventListener('click', () => {
-            const activeWorkout = getFromLocalStorage('activeWorkout');
-            if (activeWorkout && activeWorkout.pianoId === pianoId && activeWorkout.routineId === routineId) {
-                alert("Impossibile eliminare la routine mentre è in corso un allenamento basato su di essa.");
-                return;
-            }
-
-            if (confirm("Eliminare routine?")) {
-                const p = piani.find(p => p.id === pianoId);
-                p.routine = p.routine.filter(r => r.id !== routineId);
-                saveToLocalStorage('pianiDiAllenamento', piani);
-                window.location.href = `routine.html?pianoId=${pianoId}`;
-            }
-        });
+        document.querySelector('#titolo-dettaglio-routine').innerHTML = routine.nome;
     }
 
     function initDragAndDrop() {

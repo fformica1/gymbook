@@ -49,22 +49,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.style.paddingTop = `${appHeader.offsetHeight + 20}px`;
     }
 
-    // --- MEMORIA NAVIGAZIONE SEZIONE PIANI ---
-    if (['piani', 'routine', 'routine-dettaglio'].includes(currentPage)) {
-        localStorage.setItem('lastPianiPage', window.location.href);
-    }
-
-    const pianiNavLink = document.querySelector('.bottom-nav a[href="piani.html"]');
-    if (pianiNavLink) {
-        pianiNavLink.addEventListener('click', (e) => {
-            if (!['piani', 'routine', 'routine-dettaglio'].includes(currentPage)) {
-                e.preventDefault();
-                const lastPianiPage = localStorage.getItem('lastPianiPage');
-                window.location.href = lastPianiPage || 'piani.html';
-            }
-        });
-    }
-
     // Applica il tema salvato all'avvio (funzione in utils.js)
     if (typeof applyTheme === 'function') applyTheme();
 
@@ -112,6 +96,9 @@ function manageNativeBackButton(currentPage) {
 
         const params = new URLSearchParams(window.location.search);
         const pianoId = params.get('pianoId');
+        const routineId = params.get('routineId');
+        const mode = params.get('mode');
+        const from = params.get('from');
 
         // Logica ad albero: definisce il "Genitore" di ogni pagina
         switch (currentPage) {
@@ -122,10 +109,17 @@ function manageNativeBackButton(currentPage) {
                 window.location.href = 'piani.html';
                 break;
             case 'routine-dettaglio':
-                if (pianoId) window.location.href = `routine.html?pianoId=${pianoId}`;
+                if (from === 'home') window.location.href = 'index.html';
+                else if (pianoId) window.location.href = `routine.html?pianoId=${pianoId}`;
                 else window.location.href = 'piani.html';
                 break;
             case 'esercizi':
+                if (mode === 'selection' && pianoId && routineId) {
+                    window.location.href = `routine-dettaglio.html?pianoId=${pianoId}&routineId=${routineId}`;
+                } else {
+                    window.location.href = 'index.html';
+                }
+                break;
             case 'impostazioni':
             case 'allenamento':
                 window.location.href = 'index.html';

@@ -158,30 +158,55 @@ window.setupAllenamentoPage = function() {
     });
 
     // --- Funzione Focus Mode (Oscura esercizi non attivi) ---
-    function updateExerciseFocus() {
-        const cards = container.querySelectorAll('.esercizio-card');
-        let activeFound = false;
+    let currentActiveCard = null;
 
-        cards.forEach(card => {
-            if (activeFound) {
-                // Esercizi futuri (dopo quello attivo) -> Oscurati
-                card.classList.add('dimmed');
-            } else {
+    function updateExerciseFocus(forceCard = null) {
+        const cards = container.querySelectorAll('.esercizio-card');
+        
+        if (forceCard) {
+            currentActiveCard = forceCard;
+        }
+
+        // Se non c'è un esercizio attivo (es. avvio), trova il primo non completato
+        if (!currentActiveCard) {
+            for (const card of cards) {
                 const allSets = card.querySelectorAll('.set-check');
                 const isComplete = Array.from(allSets).every(cb => cb.checked);
-
                 if (!isComplete) {
-                    // Primo esercizio non completo -> ATTIVO (Visibile)
+                    currentActiveCard = card;
+                    break;
+                }
+            }
+        }
+
+        cards.forEach(card => {
+            if (currentActiveCard) {
+                if (card === currentActiveCard) {
                     card.classList.remove('dimmed');
-                    activeFound = true;
                 } else {
-                    // Esercizi completati (prima di quello attivo) -> Oscurati
                     card.classList.add('dimmed');
                 }
+            } else {
+                // Fallback se tutto è completo o nessun attivo trovato
+                card.classList.remove('dimmed');
             }
         });
     }
     updateExerciseFocus(); // Esegui all'avvio
+
+    // Listeners per attivazione manuale esercizio (Focus Mode)
+    container.addEventListener('click', (e) => {
+        const card = e.target.closest('.esercizio-card');
+        if (card) {
+            updateExerciseFocus(card);
+            card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    });
+    
+    container.addEventListener('focusin', (e) => {
+        const card = e.target.closest('.esercizio-card');
+        if (card) updateExerciseFocus(card);
+    });
 
     // Scroll automatico all'esercizio in corso quando si rientra nella pagina
     setTimeout(() => {
@@ -317,6 +342,7 @@ window.setupAllenamentoPage = function() {
                         nextCard = nextCard.nextElementSibling;
                     }
                     if (nextCard) {
+                        updateExerciseFocus(nextCard); // Passa il focus al prossimo esercizio
                         setTimeout(() => {
                             nextCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
                         }, 500);
@@ -431,14 +457,17 @@ window.setupAllenamentoPage = function() {
             pianoId, routineId, routineNome: routine.nome, esercizi: []
         };
 
-        // 1. Popola workoutLog per lo STORICO con solo le serie COMPLETATE
+        // 1. Popola workoutLog per lo STORICO (tutte le serie per mantenere allineamento)
         container.querySelectorAll('.esercizio-card').forEach(card => {
             const seriePerStorico = [];
             card.querySelectorAll('.set-row').forEach(riga => {
-                if (riga.querySelector('.set-check').checked) {
-                    const inputs = riga.querySelectorAll('input[type="number"]');
-                    seriePerStorico.push({ kg: inputs[0].value || 0, reps: inputs[1].value || 0 });
-                }
+                const inputs = riga.querySelectorAll('input[type="number"]');
+                const isChecked = riga.querySelector('.set-check').checked;
+                seriePerStorico.push({ 
+                    kg: inputs[0].value || 0, 
+                    reps: inputs[1].value || 0,
+                    completed: isChecked
+                });
             });
             workoutLog.esercizi.push({
                 esercizioId: routine.esercizi.find(e => e.id === card.dataset.esercizioId).esercizioId,
@@ -461,8 +490,9 @@ window.setupAllenamentoPage = function() {
             container.querySelectorAll('.esercizio-card').forEach(card => {
                 const esercizioTarget = routineDaAggiornare.esercizi.find(e => e.id === card.dataset.esercizioId);
                 if (esercizioTarget) {
-                    // Aggiorna sempre le note
+                    // Aggiorna sempre le note e il recupero
                     esercizioTarget.note = card.querySelector('textarea').value;
+                    esercizioTarget.recupero = card.querySelector('.recovery-input').value;
 
                     // Se "Aggiorna routine" è spuntato, aggiorna i valori delle serie
                     if (updateRoutineToggle.checked) {

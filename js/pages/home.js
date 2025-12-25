@@ -3,6 +3,26 @@ window.setupHomePage = function() {
     const activePlanNameEl = document.querySelector('#active-plan-name');
     const routineListHomeEl = document.querySelector('#routine-list-home');
     
+    // Gestione click su routine: impedisce avvio di nuovi allenamenti se uno è già in corso
+    if (routineListHomeEl) {
+        routineListHomeEl.addEventListener('click', (e) => {
+            const link = e.target.closest('a');
+            if (link && link.href.includes('allenamento.html')) {
+                const activeWorkout = getFromLocalStorage('activeWorkout');
+                if (activeWorkout) {
+                    const url = new URL(link.href);
+                    const clickedRoutineId = url.searchParams.get('routineId');
+                    const clickedPianoId = url.searchParams.get('pianoId');
+
+                    if (activeWorkout.routineId !== clickedRoutineId || activeWorkout.pianoId !== clickedPianoId) {
+                        e.preventDefault();
+                        window.location.href = `routine-dettaglio.html?pianoId=${clickedPianoId}&routineId=${clickedRoutineId}&from=home`;
+                    }
+                }
+            }
+        });
+    }
+
     // --- Setup Banner Listeners (Una sola volta all'avvio) ---
     const workoutBanner = document.querySelector('#active-workout-banner');
     if (workoutBanner) {
@@ -234,10 +254,4 @@ window.setupHomePage = function() {
             document.body.style.paddingBottom = '100px'; // Ripristina il padding di default per la sola navbar
         }
     }
-
-    routineListHomeEl.addEventListener('click', (e) => {
-        const link = e.target.closest('a.title-link');
-        if (!link) return;
-        if (getFromLocalStorage('activeWorkout')) e.preventDefault();
-    });
 };

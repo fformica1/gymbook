@@ -333,8 +333,8 @@ input.set-input {
 }
 
 /* --- Scroll Snap (Magnete Esercizi) --- */
-html {
-    scroll-snap-type: y proximity; /* 'proximity' non forza lo scorrimento ma aggancia se vicino */
+body {
+    scroll-snap-type: y mandatory; /* 'mandatory' forza l'aggancio */
 }
 
 .esercizio-card {

@@ -25,6 +25,7 @@
     -webkit-touch-callout: none; /* Disabilita menu contestuale (copia/incolla/link) al tocco prolungato */
     user-select: none; /* Disabilita la selezione del testo nell'interfaccia */
     -webkit-user-select: none;
+    scrollbar-width: none; /* Nasconde scrollbar su Firefox */
 }
 
 /* Riabilita l'interazione per i campi di input */
@@ -34,6 +35,12 @@ input, textarea, [contenteditable] {
     cursor: text;
 }
 
+html {
+    overscroll-behavior: none; /* Disabilita pull-to-refresh e rimbalzo su tutto il documento */
+    height: 100%;
+    width: 100%;
+}
+
 body {
     background-color: var(--bg);
     color: var(--text);
@@ -41,7 +48,8 @@ body {
     margin: 0;
     padding: 0;
     padding-bottom: 100px;
-    overscroll-behavior-y: none; /* Previene il rimbalzo elastico della pagina (rubber-banding) */
+    overscroll-behavior-y: none;
+    height: 100%;
 }
 
 /* Nasconde le scrollbar per un look più pulito (come un'app nativa) */

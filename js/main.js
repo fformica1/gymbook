@@ -14,6 +14,13 @@ document.addEventListener('DOMContentLoaded', () => {
             });
     }
 
+    // --- Disabilita Menu Contestuale (Pressione prolungata) ---
+    window.oncontextmenu = function(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        return false;
+    };
+
     // Funzione per determinare la pagina corrente
     const getCurrentPage = () => {
         const path = window.location.pathname;
@@ -81,4 +88,43 @@ document.addEventListener('DOMContentLoaded', () => {
         default:
             if (currentPage !== 'unknown') console.log("Nessuna logica specifica per questa pagina.");
     }
+
+    // --- Gestione Tasto Indietro Nativo (Tree Navigation) ---
+    manageNativeBackButton(currentPage);
 });
+
+function manageNativeBackButton(currentPage) {
+    // Se siamo nella home, lasciamo il comportamento nativo (uscita dall'app o background)
+    if (currentPage === 'home') return;
+
+    // Inseriamo uno stato fittizio nella history per intercettare il "back"
+    history.pushState(null, null, location.href);
+
+    window.addEventListener('popstate', (event) => {
+        // Impediamo al browser di tornare indietro nella history reale
+        // e reinseriamo lo stato per mantenere il blocco se l'utente preme ancora back
+        history.pushState(null, null, location.href);
+
+        const params = new URLSearchParams(window.location.search);
+        const pianoId = params.get('pianoId');
+
+        // Logica ad albero: definisce il "Genitore" di ogni pagina
+        switch (currentPage) {
+            case 'piani':
+                window.location.href = 'index.html';
+                break;
+            case 'routine':
+                window.location.href = 'piani.html';
+                break;
+            case 'routine-dettaglio':
+                if (pianoId) window.location.href = `routine.html?pianoId=${pianoId}`;
+                else window.location.href = 'piani.html';
+                break;
+            case 'esercizi':
+            case 'impostazioni':
+            case 'allenamento':
+                window.location.href = 'index.html';
+                break;
+        }
+    });
+}

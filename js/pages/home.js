@@ -16,7 +16,7 @@ window.setupHomePage = function() {
 
                     if (activeWorkout.routineId !== clickedRoutineId || activeWorkout.pianoId !== clickedPianoId) {
                         e.preventDefault();
-                        window.location.href = `allenamento.html?pianoId=${clickedPianoId}&routineId=${clickedRoutineId}&mode=preview`;
+                        window.location.replace(`allenamento.html?pianoId=${clickedPianoId}&routineId=${clickedRoutineId}&mode=preview`);
                     }
                 }
             }
@@ -37,7 +37,7 @@ window.setupHomePage = function() {
             const activeWorkout = getFromLocalStorage('activeWorkout');
             if (activeWorkout) {
                 const { pianoId, routineId } = activeWorkout;
-                window.location.href = `allenamento.html?pianoId=${pianoId}&routineId=${routineId}`;
+                window.location.replace(`allenamento.html?pianoId=${pianoId}&routineId=${routineId}`);
             }
         });
 
@@ -121,11 +121,11 @@ window.setupHomePage = function() {
                     animateTitleIfLong(routineDiv.querySelector('h3'));
                 });
             } else {
-                routineListHomeEl.innerHTML = '<p>Questo piano non ha ancora nessuna routine.</p>';
+                routineListHomeEl.innerHTML = '<p>Questo piano di allenamento non ha ancora nessuna routine.</p>';
             }
         } else {
-            activePlanNameEl.textContent = 'Nessun piano attivo';
-            routineListHomeEl.innerHTML = '<p>Seleziona un piano di allenamento.</p>';
+            activePlanNameEl.textContent = 'Nessun piano di allenamento attivo';
+            routineListHomeEl.innerHTML = '<p>Crea un piano di allenamento per iniziare.</p>';
         }
 
         // Drag and Drop Logic

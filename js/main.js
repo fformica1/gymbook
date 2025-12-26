@@ -26,6 +26,24 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
     });
 
+    // --- Gestione Navigazione Globale (Usa replace per non accumulare history) ---
+    // Questo impedisce che si crei una cronologia "indietro" navigando nell'app
+    document.body.addEventListener('click', (e) => {
+        const link = e.target.closest('a');
+        // Applica solo ai link di navigazione interna (Bottom Nav, Liste, Header Back)
+        if (link && (link.closest('.bottom-nav') || link.classList.contains('title-link') || link.classList.contains('header-icon-left') || link.classList.contains('btn-back-arrow'))) {
+            // Ignora se è un link speciale (es. javascript:void)
+            if (link.getAttribute('href').startsWith('javascript')) return;
+            
+            e.preventDefault();
+            const targetUrl = link.href;
+            
+            if (window.location.href !== targetUrl) {
+                window.location.replace(targetUrl);
+            }
+        }
+    });
+
     // Funzione per determinare la pagina corrente
     const getCurrentPage = () => {
         const path = window.location.pathname;

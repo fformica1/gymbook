@@ -32,11 +32,11 @@
 .header-title-wrapper {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 15px; /* Aumentato da 10px a 15px per distanziare dal timer */
     flex: 1;
     min-width: 0;
     overflow: hidden;
-    margin-right: 5px; /* Distanza di sicurezza dal timer */
+    margin-right: 20px; /* Distanza di sicurezza dal timer */
 }
 
 .btn-back-arrow {
@@ -69,7 +69,7 @@
 .workout-info {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 15px; /* Aumentato spazio */
 }
 
 /* Tasto Fine leggermente più compatto per stare nell'header */
@@ -300,14 +300,11 @@ input.set-input {
 
 .adjust-control .set-input { width: 100%; max-width: 80px; }
 
-.set-check {
-    transform: scale(1.5);
+.btn-check-set {
     flex: 0 0 40px;
     display: flex;
     justify-content: center;
     align-items: center;
-    margin: 0;
-    accent-color: var(--accent);
 }
 
 .action-buttons-container {

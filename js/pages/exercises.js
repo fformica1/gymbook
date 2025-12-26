@@ -102,7 +102,7 @@ window.setupEserciziPage = function() {
                 }
             });
             saveToLocalStorage('pianiDiAllenamento', piani);
-            window.location.href = `routine-dettaglio.html?pianoId=${pianoId}&routineId=${routineId}`;
+            window.location.replace(`routine-dettaglio.html?pianoId=${pianoId}&routineId=${routineId}`);
         });
     }
 

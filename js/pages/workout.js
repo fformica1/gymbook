@@ -55,6 +55,9 @@ window.setupAllenamentoPage = function() {
         titleContainer.appendChild(titleElement);
     }
 
+    const ICON_CHECKED = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:24px; height:24px;"><path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clip-rule="evenodd" /></svg>`;
+    const ICON_UNCHECKED = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:24px; height:24px;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>`;
+
     // UI Elements
     document.querySelector('.routine-title').textContent = routine.nome;
     animateTitleIfLong(document.querySelector('.routine-title'));
@@ -78,6 +81,8 @@ window.setupAllenamentoPage = function() {
 
     if (isPreviewMode) {
         workoutState = null; // Non caricare lo stato dell'allenamento attivo
+        if (recoveryTimerContainer) recoveryTimerContainer.style.display = 'none';
+        document.body.style.scrollSnapType = 'none'; // Rimuovi magnetismo in anteprima
     }
 
     // Funzione per aggiornare lo stato del pulsante (AVVIA / FINE)
@@ -98,6 +103,18 @@ window.setupAllenamentoPage = function() {
         }
     }
 
+    // Gestione Toggle Aggiorna Routine
+    if (updateRoutineToggle) {
+        updateRoutineToggle.addEventListener('click', (e) => {
+            e.preventDefault();
+            const isChecked = updateRoutineToggle.dataset.checked === 'true';
+            const newState = !isChecked;
+            updateRoutineToggle.dataset.checked = newState ? 'true' : 'false';
+            updateRoutineToggle.innerHTML = newState ? ICON_CHECKED : ICON_UNCHECKED;
+            updateRoutineToggle.style.color = newState ? 'var(--accent)' : 'var(--text-dim)';
+        });
+    }
+
     container.innerHTML = '';
 
     // Render Esercizi
@@ -111,7 +128,8 @@ window.setupAllenamentoPage = function() {
         const serieDaRenderizzare = workoutState?.esercizi[esercizio.id]?.serie || esercizio.serie;
         const serieHtml = serieDaRenderizzare.map((s, index) => {
             const prevData = lastPerformance && lastPerformance.serie[index] ? `${lastPerformance.serie[index].kg}kg x ${lastPerformance.serie[index].reps}` : '-';
-            const isChecked = s.completed ? 'checked' : '';
+            const checkIcon = s.completed ? ICON_CHECKED : ICON_UNCHECKED;
+            const btnColor = s.completed ? 'var(--accent)' : 'var(--text-dim)';
             const rowClass = s.completed ? 'set-row completed' : 'set-row';
             
             const disabledAttr = isPreviewMode ? 'disabled' : '';
@@ -133,7 +151,7 @@ window.setupAllenamentoPage = function() {
                             <button class="btn-reps-adjust" data-adjust="1" ${hideStyle}>+</button>
                         </div>
                     </div>
-                    <input type="checkbox" class="set-check" ${isChecked} ${disabledAttr}>
+                    <button type="button" class="btn-check-set" data-completed="${s.completed ? 'true' : 'false'}" style="background:none; border:none; padding:0; cursor:pointer; color: ${btnColor}; display: flex; align-items: center; justify-content: center;" ${disabledAttr}>${checkIcon}</button>
                 </div>`;
         }).join('');
 
@@ -181,7 +199,7 @@ window.setupAllenamentoPage = function() {
                 const repsValue = lastRow ? lastRow.querySelectorAll('.set-input')[1].value : '';
                 const newRow = document.createElement('div');
                 newRow.className = 'set-row';
-                newRow.innerHTML = `<span class="set-number">${rowCount + 1}</span><span class="set-previous">-</span><div class="set-inputs"><div class="adjust-control"><button class="btn-weight-adjust" data-adjust="-2.5">-</button><input type="number" class="set-input weight-input" value="${kgValue}" inputmode="decimal" step="any"><button class="btn-weight-adjust" data-adjust="2.5">+</button></div><div class="adjust-control"><button class="btn-reps-adjust" data-adjust="-1">-</button><input type="number" class="set-input reps-input" value="${repsValue}" inputmode="numeric"><button class="btn-reps-adjust" data-adjust="1">+</button></div></div><input type="checkbox" class="set-check">`;
+                newRow.innerHTML = `<span class="set-number">${rowCount + 1}</span><span class="set-previous">-</span><div class="set-inputs"><div class="adjust-control"><button class="btn-weight-adjust" data-adjust="-2.5">-</button><input type="number" class="set-input weight-input" value="${kgValue}" inputmode="decimal" step="any"><button class="btn-weight-adjust" data-adjust="2.5">+</button></div><div class="adjust-control"><button class="btn-reps-adjust" data-adjust="-1">-</button><input type="number" class="set-input reps-input" value="${repsValue}" inputmode="numeric"><button class="btn-reps-adjust" data-adjust="1">+</button></div></div><button type="button" class="btn-check-set" data-completed="false" style="background:none; border:none; padding:0; cursor:pointer; color: var(--text-dim); display: flex; align-items: center; justify-content: center;">${ICON_UNCHECKED}</button>`;
                 setsContainer.appendChild(newRow);
             });
         }
@@ -214,8 +232,8 @@ window.setupAllenamentoPage = function() {
         // Se non c'è un esercizio attivo (es. avvio), trova il primo non completato
         if (!currentActiveCard) {
             for (const card of cards) {
-                const allSets = card.querySelectorAll('.set-check');
-                const isComplete = Array.from(allSets).every(cb => cb.checked);
+                const allSets = card.querySelectorAll('.btn-check-set');
+                const isComplete = Array.from(allSets).every(btn => btn.dataset.completed === 'true');
                 if (!isComplete) {
                     currentActiveCard = card;
                     break;
@@ -238,104 +256,133 @@ window.setupAllenamentoPage = function() {
     }
     updateExerciseFocus(); // Esegui all'avvio
 
-    // Listeners per attivazione manuale esercizio (Focus Mode)
+    // --- Consolidated Event Delegation for the entire workout container ---
     container.addEventListener('click', (e) => {
+        const checkBtn = e.target.closest('.btn-check-set');
+        const weightAdjustBtn = e.target.closest('.btn-weight-adjust');
+        const repsAdjustBtn = e.target.closest('.btn-reps-adjust');
+        const quickAdjustBtn = e.target.closest('.btn-quick-adjust');
         const card = e.target.closest('.esercizio-card');
+
+        // 1. Handle Set Completion Check
+        if (checkBtn) {
+            e.preventDefault();
+            if (checkBtn.disabled) return;
+
+            const isCompleted = checkBtn.dataset.completed === 'true';
+            const newState = !isCompleted;
+
+            if (!getFromLocalStorage('workoutStartTime')) {
+                saveToLocalStorage('workoutStartTime', Date.now());
+                saveToLocalStorage('activeWorkout', { pianoId, routineId });
+                startWorkoutTimer();
+                updateWorkoutButton();
+            }
+
+            checkBtn.dataset.completed = newState ? 'true' : 'false';
+            checkBtn.innerHTML = newState ? ICON_CHECKED : ICON_UNCHECKED;
+            checkBtn.style.color = newState ? 'var(--accent)' : 'var(--text-dim)';
+
+            saveCurrentWorkoutState();
+            const row = checkBtn.closest('.set-row');
+            if (newState) {
+                row.classList.add('completed');
+                startRecoveryTimer(parseInt(checkBtn.closest('.esercizio-card').querySelector('.recovery-input').value, 10) || 90);
+            } else {
+                row.classList.remove('completed');
+            }
+
+            const currentCard = checkBtn.closest('.esercizio-card');
+            if (currentCard) {
+                const allSets = currentCard.querySelectorAll('.btn-check-set');
+                const allCompleted = Array.from(allSets).every(b => b.dataset.completed === 'true');
+
+                if (allCompleted) {
+                    let nextCard = currentCard.nextElementSibling;
+                    while (nextCard && !nextCard.classList.contains('esercizio-card')) {
+                        nextCard = nextCard.nextElementSibling;
+                    }
+                    if (nextCard) {
+                        updateExerciseFocus(nextCard);
+                        setTimeout(() => {
+                            nextCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }, 500);
+                    } else {
+                        updateExerciseFocus(currentCard);
+                    }
+                } else {
+                    updateExerciseFocus(currentCard);
+                    // Se l'esercizio torna incompleto, riporta il focus e scorri su di esso
+                    currentCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
+            return; // Stop further processing
+        }
+
+        // 2. Handle +/- buttons for individual sets (hidden by default, but logic is here)
+        if (weightAdjustBtn) {
+            const input = weightAdjustBtn.closest('.adjust-control').querySelector('.set-input');
+            const currentVal = parseFloat(input.value) || 0;
+            const direction = parseFloat(weightAdjustBtn.dataset.adjust) > 0 ? 1 : -1;
+            const baseIncrement = parseFloat(localStorage.getItem('weightIncrement')) || 2.5;
+            let step = baseIncrement;
+            if (direction > 0) {
+                if (currentVal >= 150) step = 10; else if (currentVal >= 40) step = 5;
+            } else {
+                if (currentVal > 150) step = 10; else if (currentVal > 40) step = 5;
+            }
+            input.value = Math.max(0, currentVal + (step * direction));
+            saveCurrentWorkoutState();
+            return;
+        }
+        if (repsAdjustBtn) {
+            const input = repsAdjustBtn.closest('.adjust-control').querySelector('.set-input');
+            input.value = Math.max(0, (parseFloat(input.value) || 0) + parseFloat(repsAdjustBtn.dataset.adjust));
+            saveCurrentWorkoutState();
+            return;
+        }
+
+        // 3. Handle Quick Adjust buttons
+        if (quickAdjustBtn) {
+            const targetCard = quickAdjustBtn.closest('.esercizio-card');
+            const setsContainer = targetCard.querySelector('.sets-container');
+            const rows = Array.from(setsContainer.querySelectorAll('.set-row'));
+            let targetRow = rows.find(row => row.querySelector('.btn-check-set').dataset.completed !== 'true');
+            if (!targetRow && rows.length > 0) targetRow = rows[rows.length - 1];
+
+            if (targetRow) {
+                const type = quickAdjustBtn.dataset.type;
+                const val = parseFloat(quickAdjustBtn.dataset.val);
+                const inputIndex = type === 'kg' ? 0 : 1;
+                const input = targetRow.querySelectorAll('.set-input')[inputIndex];
+                const currentValue = parseFloat(input.value) || 0;
+                let newValue;
+                if (type === 'kg') {
+                    const direction = val > 0 ? 1 : -1;
+                    const baseIncrement = parseFloat(localStorage.getItem('weightIncrement')) || 2.5;
+                    let step = baseIncrement;
+                    if (direction > 0) {
+                        if (currentValue >= 150) step = 10; else if (currentValue >= 40) step = 5;
+                    } else {
+                        if (currentValue > 150) step = 10; else if (currentValue > 40) step = 5;
+                    }
+                    newValue = Math.max(0, currentValue + (step * direction));
+                } else {
+                    newValue = Math.max(0, currentValue + val);
+                }
+                input.value = newValue;
+                saveCurrentWorkoutState();
+            }
+            return;
+        }
+
+        // 4. Handle click on the card itself for Focus Mode
         if (card) {
             updateExerciseFocus(card);
             if (!isPreviewMode) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
     });
     
-    container.addEventListener('focusin', (e) => {
-        const card = e.target.closest('.esercizio-card');
-        if (card) updateExerciseFocus(card);
-    });
-
-    // Scroll automatico all'esercizio in corso quando si rientra nella pagina
-    setTimeout(() => {
-        if (isPreviewMode) return;
-        const activeCard = container.querySelector('.esercizio-card:not(.dimmed)');
-        if (activeCard) {
-            activeCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-    }, 300);
-
-    // Event Delegation
-    container.addEventListener('click', (e) => {
-        // Gestione pulsanti nascosti (vecchia implementazione, mantenuta per sicurezza)
-        if (e.target.classList.contains('btn-weight-adjust')) {
-            const input = e.target.closest('.adjust-control').querySelector('.set-input');
-            const currentVal = parseFloat(input.value) || 0;
-            const direction = parseFloat(e.target.dataset.adjust) > 0 ? 1 : -1;
-            
-            // Logica Incremento Dinamico
-            const baseIncrement = parseFloat(localStorage.getItem('weightIncrement')) || 2.5;
-            let step = baseIncrement;
-            
-            if (direction > 0) {
-                if (currentVal >= 150) step = 10;
-                else if (currentVal >= 40) step = 5;
-            } else {
-                if (currentVal > 150) step = 10;
-                else if (currentVal > 40) step = 5;
-            }
-            
-            input.value = Math.max(0, currentVal + (step * direction));
-            saveCurrentWorkoutState(); 
-        } else if (e.target.classList.contains('btn-reps-adjust')) {
-            const input = e.target.closest('.adjust-control').querySelector('.set-input');
-            input.value = Math.max(0, (parseFloat(input.value) || 0) + parseFloat(e.target.dataset.adjust));
-            saveCurrentWorkoutState(); // Salva dopo la modifica
-        }
-
-        // Gestione NUOVI pulsanti Quick Adjust (sotto la lista)
-        if (e.target.classList.contains('btn-quick-adjust')) {
-            const card = e.target.closest('.esercizio-card');
-            const setsContainer = card.querySelector('.sets-container');
-            
-            // Trova la prima serie non completata (serie in corso)
-            const rows = Array.from(setsContainer.querySelectorAll('.set-row'));
-            let targetRow = rows.find(row => !row.querySelector('.set-check').checked);
-            // Se tutte sono completate, usa l'ultima come fallback per eventuali correzioni
-            if (!targetRow && rows.length > 0) targetRow = rows[rows.length - 1];
-
-            if (targetRow) {
-                const type = e.target.dataset.type; // 'kg' o 'reps'
-                const val = parseFloat(e.target.dataset.val);
-                // Seleziona l'input corretto: 0 per kg, 1 per reps
-                const inputIndex = type === 'kg' ? 0 : 1;
-                const input = targetRow.querySelectorAll('.set-input')[inputIndex];
-                
-                const currentValue = parseFloat(input.value) || 0;
-                let newValue;
-
-                if (type === 'kg') {
-                    const direction = val > 0 ? 1 : -1;
-                    const baseIncrement = parseFloat(localStorage.getItem('weightIncrement')) || 2.5;
-                    let step = baseIncrement;
-                    
-                    if (direction > 0) {
-                        if (currentValue >= 150) step = 10;
-                        else if (currentValue >= 40) step = 5;
-                    } else {
-                        if (currentValue > 150) step = 10;
-                        else if (currentValue > 40) step = 5;
-                    }
-                    newValue = Math.max(0, currentValue + (step * direction));
-                } else {
-                    newValue = Math.max(0, currentValue + val);
-                }
-                
-                // Aggiorna il valore e forza l'aggiornamento visivo se necessario
-                input.value = newValue;
-                
-                // Salva lo stato
-                saveCurrentWorkoutState();
-            }
-        }
-    });
-
     container.addEventListener('focusin', (e) => {
         if (e.target.classList.contains('set-input') || e.target.classList.contains('recovery-input')) {
             e.target.dataset.originalValue = e.target.value;
@@ -355,49 +402,6 @@ window.setupAllenamentoPage = function() {
         if (e.target.tagName === 'TEXTAREA' && e.target.classList.contains('auto-expand')) {
             e.target.style.height = 'auto';
             e.target.style.height = e.target.scrollHeight + 'px';
-        }
-    });
-    container.addEventListener('change', (e) => {
-        if (e.target.classList.contains('set-check')) {
-            // Avvia il timer e l'allenamento effettivo solo al primo check
-            if (!getFromLocalStorage('workoutStartTime')) {
-                saveToLocalStorage('workoutStartTime', Date.now());
-                saveToLocalStorage('activeWorkout', { pianoId, routineId });
-                startWorkoutTimer();
-                updateWorkoutButton();
-            }
-
-            saveCurrentWorkoutState();
-            const row = e.target.closest('.set-row');
-            if (e.target.checked) {
-                row.classList.add('completed');
-                startRecoveryTimer(parseInt(e.target.closest('.esercizio-card').querySelector('.recovery-input').value, 10) || 90);
-            } else {
-                row.classList.remove('completed');
-            }
-
-            // Scorrimento automatico al prossimo esercizio se completato
-            const card = e.target.closest('.esercizio-card');
-            if (card) {
-                const allSets = card.querySelectorAll('.set-check');
-                const allCompleted = Array.from(allSets).every(cb => cb.checked);
-
-                if (allCompleted) {
-                    let nextCard = card.nextElementSibling;
-                    while (nextCard && !nextCard.classList.contains('esercizio-card')) {
-                        nextCard = nextCard.nextElementSibling;
-                    }
-                    if (nextCard) {
-                        updateExerciseFocus(nextCard); // Passa il focus al prossimo esercizio
-                        setTimeout(() => {
-                            nextCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        }, 500);
-                    }
-                }
-                
-                // Aggiorna il focus visivo (oscura/rivela esercizi)
-                updateExerciseFocus();
-            }
         }
     });
 
@@ -480,7 +484,7 @@ window.setupAllenamentoPage = function() {
             const serie = [];
             card.querySelectorAll('.set-row').forEach(row => {
                 const inputs = row.querySelectorAll('.set-input');
-                serie.push({ kg: inputs[0].value, reps: inputs[1].value, completed: row.querySelector('.set-check').checked });
+                serie.push({ kg: inputs[0].value, reps: inputs[1].value, completed: row.querySelector('.btn-check-set').dataset.completed === 'true' });
             });
             currentState.esercizi[card.dataset.esercizioId] = {
                 note: card.querySelector('textarea').value,
@@ -525,7 +529,7 @@ window.setupAllenamentoPage = function() {
             const seriePerStorico = [];
             card.querySelectorAll('.set-row').forEach(riga => {
                 const inputs = riga.querySelectorAll('input[type="number"]');
-                const isChecked = riga.querySelector('.set-check').checked;
+                const isChecked = riga.querySelector('.btn-check-set').dataset.completed === 'true';
                 seriePerStorico.push({ 
                     kg: inputs[0].value || 0, 
                     reps: inputs[1].value || 0,
@@ -558,7 +562,7 @@ window.setupAllenamentoPage = function() {
                     esercizioTarget.recupero = card.querySelector('.recovery-input').value;
 
                     // Se "Aggiorna routine" è spuntato, aggiorna i valori delle serie
-                    if (updateRoutineToggle.checked) {
+                    if (updateRoutineToggle.dataset.checked === 'true') {
                         const nuoveSerie = [];
                         card.querySelectorAll('.set-row').forEach((riga, index) => {
                             const inputs = riga.querySelectorAll('input[type="number"]');
@@ -566,7 +570,7 @@ window.setupAllenamentoPage = function() {
                             const reps = inputs[1].value || 0;
                             
                             // Se la serie è stata completata, usa i nuovi valori
-                            if (riga.querySelector('.set-check').checked) {
+                            if (riga.querySelector('.btn-check-set').dataset.completed === 'true') {
                                 nuoveSerie.push({ kg, reps });
                             } else {
                                 // Altrimenti, mantieni i vecchi valori dalla routine originale
@@ -581,7 +585,7 @@ window.setupAllenamentoPage = function() {
             });
             saveToLocalStorage('pianiDiAllenamento', pianiDaAggiornare);
         }
-        window.location.href = 'index.html';
+        window.location.replace('index.html');
     });
 
     startWorkoutTimer();

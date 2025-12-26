@@ -184,12 +184,17 @@ window.setupEserciziPage = function() {
 
         esercizi.forEach(ex => {
             const isChecked = selectedExercises.has(ex.id);
+            const checkIcon = isChecked 
+                ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:24px; height:24px;"><path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clip-rule="evenodd" /></svg>`
+                : `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:24px; height:24px;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>`;
+            const btnColor = isChecked ? 'var(--accent)' : 'var(--text-dim)';
+
             const div = document.createElement('div');
             div.className = 'list-item-container';
             div.style.cssText = "display: flex; align-items: center; justify-content: space-between; padding: 6px 10px;";
             div.innerHTML = `
                 <label style="display: flex; align-items: center; flex-grow: 1; margin: 0; cursor: ${selectionMode ? 'pointer' : 'default'}; overflow: hidden;">
-                    ${selectionMode ? `<input type="checkbox" data-id="${ex.id}" ${isChecked ? 'checked' : ''} style="transform: scale(1.3); margin-right: 12px;">` : ''}
+                    ${selectionMode ? `<button type="button" class="btn-select-exercise" data-id="${ex.id}" style="background:none; border:none; padding:0; margin-right: 12px; cursor:pointer; color: ${btnColor}; display: flex; align-items: center;">${checkIcon}</button>` : ''}
                     <div style="display: flex; flex-direction: column; overflow: hidden; min-width: 0; flex: 1;">
                         <span class="exercise-name">${ex.nome}</span>
                         <span class="exercise-group">${ex.gruppo}</span>
@@ -207,15 +212,29 @@ window.setupEserciziPage = function() {
             
             // Gestione Checkbox (solo in selection mode)
             if (selectionMode) {
-                const checkbox = div.querySelector('input[type="checkbox"]');
-                checkbox.addEventListener('change', (e) => {
-                    if (e.target.checked) selectedExercises.add(ex.id);
-                    else selectedExercises.delete(ex.id);
+                const btnSelect = div.querySelector('.btn-select-exercise');
+                // Gestisce il click sia sul pulsante che sull'intera riga (label)
+                div.querySelector('label').addEventListener('click', (e) => {
+                    e.preventDefault(); // Previene il comportamento di default della label
+                    
+                    if (selectedExercises.has(ex.id)) {
+                        selectedExercises.delete(ex.id);
+                        btnSelect.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:24px; height:24px;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>`;
+                        btnSelect.style.color = 'var(--text-dim)';
+                    } else {
+                        selectedExercises.add(ex.id);
+                        btnSelect.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:24px; height:24px;"><path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clip-rule="evenodd" /></svg>`;
+                        btnSelect.style.color = 'var(--accent)';
+                    }
                     
                     const footer = document.getElementById('selection-footer');
                     const btn = document.getElementById('confirm-selection');
                     footer.style.display = selectedExercises.size > 0 ? 'block' : 'none';
-                    if (btn) btn.textContent = `Aggiungi ${selectedExercises.size} Esercizi`;
+                    if (btn) {
+                        const count = selectedExercises.size;
+                        const label = count === 1 ? 'esercizio' : 'esercizi';
+                        btn.textContent = `Aggiungi ${count} ${label}`;
+                    }
                 });
             }
 

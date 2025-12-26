@@ -30,10 +30,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Questo impedisce che si crei una cronologia "indietro" navigando nell'app
     document.body.addEventListener('click', (e) => {
         const link = e.target.closest('a');
-        // Applica solo ai link di navigazione interna (Bottom Nav, Liste, Header Back)
-        if (link && (link.closest('.bottom-nav') || link.classList.contains('title-link') || link.classList.contains('header-icon-left') || link.classList.contains('btn-back-arrow'))) {
-            // Ignora se è un link speciale (es. javascript:void)
-            if (link.getAttribute('href').startsWith('javascript')) return;
+        if (!link) return;
+
+        const href = link.getAttribute('href');
+        // Intercetta TUTTI i link interni che portano a pagine HTML (esclusi link esterni, ancore, js)
+        if (href && (href.endsWith('.html') || href.includes('.html?')) && !href.startsWith('http') && !href.startsWith('#') && !href.startsWith('javascript')) {
             
             e.preventDefault();
             const targetUrl = link.href;
@@ -119,8 +120,8 @@ function manageNativeBackButton(currentPage) {
         // Logica ad albero: definisce il "Genitore" di ogni pagina
         switch (currentPage) {
             case 'home':
-                // Rimaniamo sulla home (blocco navigazione all'indietro)
-                break;
+                // Rimaniamo sulla home. Il pushState all'inizio del listener ha già annullato l'azione.
+                return; 
             case 'piani':
                 window.location.replace('index.html');
                 break;

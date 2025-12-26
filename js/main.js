@@ -83,10 +83,8 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function manageNativeBackButton(currentPage) {
-    // Se siamo nella home, lasciamo il comportamento nativo (uscita dall'app o background)
-    if (currentPage === 'home') return;
-
     // Inseriamo uno stato fittizio nella history per intercettare il "back"
+    // Lo facciamo su TUTTE le pagine, inclusa la Home, per evitare che dalla Home si torni a pagine interne
     history.pushState(null, null, location.href);
 
     window.addEventListener('popstate', (event) => {
@@ -102,27 +100,37 @@ function manageNativeBackButton(currentPage) {
 
         // Logica ad albero: definisce il "Genitore" di ogni pagina
         switch (currentPage) {
+            case 'home':
+                // Rimaniamo sulla home (blocco navigazione all'indietro)
+                break;
             case 'piani':
-                window.location.href = 'index.html';
+                window.location.replace('index.html');
                 break;
             case 'routine':
-                window.location.href = 'piani.html';
+                window.location.replace('piani.html');
                 break;
             case 'routine-dettaglio':
-                if (from === 'home') window.location.href = 'index.html';
-                else if (pianoId) window.location.href = `routine.html?pianoId=${pianoId}`;
-                else window.location.href = 'piani.html';
+                if (from === 'home') window.location.replace('index.html');
+                else if (pianoId) window.location.replace(`routine.html?pianoId=${pianoId}`);
+                else window.location.replace('piani.html');
                 break;
             case 'esercizi':
                 if (mode === 'selection' && pianoId && routineId) {
-                    window.location.href = `routine-dettaglio.html?pianoId=${pianoId}&routineId=${routineId}`;
+                    window.location.replace(`routine-dettaglio.html?pianoId=${pianoId}&routineId=${routineId}`);
                 } else {
-                    window.location.href = 'index.html';
+                    window.location.replace('index.html');
                 }
                 break;
             case 'impostazioni':
+                window.location.replace('index.html');
+                break;
             case 'allenamento':
-                window.location.href = 'index.html';
+                const activeWorkout = getFromLocalStorage('activeWorkout');
+                const isPreviewMode = activeWorkout && (activeWorkout.pianoId !== pianoId || activeWorkout.routineId !== routineId);
+
+                // Se siamo in modalità anteprima ("allenamento-anteprima"), torniamo alla home.
+                // Anche dall'allenamento attivo, il comportamento di default è tornare alla home.
+                window.location.replace('index.html');
                 break;
         }
     });

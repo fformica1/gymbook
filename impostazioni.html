@@ -7,8 +7,8 @@
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" href="icon-browser.png">
     <link rel="apple-touch-icon" href="icon.png">
-    <link rel="stylesheet" href="css/global.css?v=1.4">
-    <link rel="stylesheet" href="css/components.css?v=1.4">
+    <link rel="stylesheet" href="css/global.css?v=1.5">
+    <link rel="stylesheet" href="css/components.css?v=1.5">
 </head>
 <body>
     <header class="app-header">
@@ -49,7 +49,7 @@
                     Aggiorna App
                 </button>
                 <p style="text-align: center; color: var(--text-dim); font-size: 0.85rem; margin-top: 10px;">
-                    Pulisce la cache e scarica l'ultima versione disponibile.
+                    Scarica l'ultima versione disponibile.
                 </p>
             </div>
 
@@ -64,15 +64,27 @@
         </section>
 
         <section style="margin-top: 20px; text-align: center; color: var(--text-dim);">
-            <p>GymBook v1.4</p>
+            <p>GymBook v1.5</p>
         </section>
+    </div>
+
+    <!-- Modal Conferma Generico -->
+    <div id="confirmation-modal" class="modal">
+        <div class="modal-content">
+            <h3 id="confirm-title">Conferma</h3>
+            <p id="confirm-message">Sei sicuro?</p>
+            <div class="modal-actions">
+                <button id="btn-confirm-cancel" class="btn-grigio">Annulla</button>
+                <button id="btn-confirm-ok" class="btn-elimina">Conferma</button>
+            </div>
+        </div>
     </div>
 
     <!-- La navbar non serve nella pagina impostazioni -->
 
-    <script src="js/utils.js?v=1.4"></script>
-    <script src="js/pages/settings.js?v=1.4"></script>
-    <script src="js/main.js?v=1.4"></script>
+    <script src="js/utils.js?v=1.5"></script>
+    <script src="js/pages/settings.js?v=1.5"></script>
+    <script src="js/main.js?v=1.5"></script>
     <script>
         // Script inline per gestire il salvataggio dell'incremento peso
         document.addEventListener('DOMContentLoaded', () => {
@@ -86,11 +98,10 @@
             const btnReset = document.getElementById('btn-reset-app');
             if (btnReset) {
                 btnReset.addEventListener('click', () => {
-                    const conferma = confirm("SEI SICURO?\n\nQuesta azione cancellerà TUTTI i dati salvati (Piani, Routine, Storico) e riporterà l'app allo stato iniziale.\n\nL'azione è irreversibile.");
-                    if (conferma) {
+                    showConfirmModal("Reset Totale", "SEI SICURO?<br><br>Questa azione cancellerà TUTTI i dati salvati (Piani, Routine, Storico) e riporterà l'app allo stato iniziale.<br><br>L'azione è irreversibile.", () => {
                         localStorage.clear(); // Cancella tutta la memoria
                         window.location.href = 'index.html'; // Riavvia l'app tornando alla home
-                    }
+                    });
                 });
             }
         });

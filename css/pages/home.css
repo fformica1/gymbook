@@ -55,11 +55,28 @@
     align-items: center;
 }
 
+/* Wrapper per il titolo nel banner per gestire lo scorrimento */
+.banner-title-wrapper {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    display: flex;
+    margin-right: 5px; /* Distanza di sicurezza dal timer */
+}
+
 #active-workout-banner .routine-title { 
     font-size: 20px; 
     color: var(--text); 
     font-weight: bold;
     margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#active-workout-banner .workout-info {
+    flex-shrink: 0;
+    margin-left: 10px;
 }
 
 #active-workout-banner .workout-timer { 

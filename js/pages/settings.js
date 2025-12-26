@@ -15,7 +15,7 @@ window.setupImpostazioniPage = function() {
     const btnUpdate = document.getElementById('btn-update-app');
     if (btnUpdate) {
         btnUpdate.addEventListener('click', async () => {
-            if (confirm("Vuoi scaricare l'ultima versione dell'app?")) {
+            showConfirmModal("Aggiornamento", "Vuoi scaricare l'ultima versione dell'app?<br><br>Nota: dopo aver premuto conferma, sarà necessario chiudere e riaprire l'app manualmente.", async () => {
                 const originalText = btnUpdate.textContent;
                 btnUpdate.textContent = "Aggiornamento in corso...";
                 btnUpdate.disabled = true;
@@ -39,11 +39,11 @@ window.setupImpostazioniPage = function() {
                     window.location.reload();
                 } catch (error) {
                     console.error("Errore durante l'aggiornamento:", error);
-                    alert("Errore durante l'aggiornamento. Riprova.");
+                    showConfirmModal("Errore", "Errore durante l'aggiornamento. Riprova.", () => {});
                     btnUpdate.textContent = originalText;
                     btnUpdate.disabled = false;
                 }
-            }
+            }, 'btn-modal-confirm'); // Usa il pulsante verde per l'aggiornamento
         });
     }
 };

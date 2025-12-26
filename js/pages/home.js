@@ -16,7 +16,7 @@ window.setupHomePage = function() {
 
                     if (activeWorkout.routineId !== clickedRoutineId || activeWorkout.pianoId !== clickedPianoId) {
                         e.preventDefault();
-                        window.location.href = `routine-dettaglio.html?pianoId=${clickedPianoId}&routineId=${clickedRoutineId}&from=home`;
+                        window.location.href = `allenamento.html?pianoId=${clickedPianoId}&routineId=${clickedRoutineId}&mode=preview`;
                     }
                 }
             }
@@ -82,6 +82,7 @@ window.setupHomePage = function() {
 
         if (activePiano) {
             activePlanNameEl.textContent = activePiano.nome;
+            animateTitleIfLong(activePlanNameEl);
             routineListHomeEl.innerHTML = '';
             if (activePiano.routine.length > 0) {
                 const storico = getFromLocalStorage('storicoAllenamenti') || [];
@@ -117,6 +118,7 @@ window.setupHomePage = function() {
                         <span class="last-workout-date">${testoUltimoAllenamento}</span>
                     `;
                     routineListHomeEl.appendChild(routineDiv);
+                    animateTitleIfLong(routineDiv.querySelector('h3'));
                 });
             } else {
                 routineListHomeEl.innerHTML = '<p>Questo piano non ha ancora nessuna routine.</p>';
@@ -197,6 +199,7 @@ window.setupHomePage = function() {
                 // Impostiamo il padding del body per evitare che l'ultimo elemento della lista sia nascosto
                 document.body.style.paddingBottom = `${bannerHeight + navHeight}px`;
                 workoutBanner.querySelector('.routine-title').textContent = routine.nome;
+                animateTitleIfLong(workoutBanner.querySelector('.routine-title'));
                 const bannerTimerEl = workoutBanner.querySelector('.workout-timer');
 
                 // Avvia il timer nel banner

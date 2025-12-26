@@ -33,7 +33,7 @@ textarea.auto-expand {
 .btn-primary {
     width: 100%;
     background: var(--accent);
-    color: black;
+    color: white;
     border: none;
     border-radius: 14px;
     padding: 18px;
@@ -73,6 +73,16 @@ textarea.auto-expand {
     padding: 12px 18px;
     cursor: pointer;
     flex-shrink: 0;
+}
+
+/* Nuovo stile per pulsanti conferma nei modali (stile btn-elimina ma verde) */
+.btn-modal-confirm {
+    background-color: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 18px;
+    cursor: pointer;
 }
 
 /* --- Liste e Card Generiche --- */
@@ -140,17 +150,26 @@ article,
     flex-grow: 1;
     min-width: 0;
     margin-right: 10px;
+    overflow: hidden; /* Maschera per l'animazione marquee */
+    display: block; /* Assicura che overflow funzioni correttamente */
 }
 
 .title-link h3 {
     margin: 0;
     font-size: 24px;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    -webkit-box-orient: vertical;
+    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.routine-list-preview {
+    font-size: 14px;
+    color: var(--text-dim);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+    margin-top: 4px;
 }
 
 /* --- Modali --- */
@@ -199,7 +218,12 @@ article,
 
 .modal-actions {
     margin-top: 15px;
-    text-align: right;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+.modal-actions button {
+    flex: 1;
 }
 
 /* --- Switch Toggle --- */

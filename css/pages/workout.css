@@ -32,7 +32,11 @@
 .header-title-wrapper {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 5px;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    margin-right: 5px; /* Distanza di sicurezza dal timer */
 }
 
 .btn-back-arrow {
@@ -51,6 +55,9 @@
     font-size: 20px;
     font-weight: bold;
     margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .workout-timer {
@@ -62,7 +69,7 @@
 .workout-info {
     display: flex;
     align-items: center;
-    gap: 15px; /* Aumentato spazio */
+    gap: 8px;
 }
 
 /* Tasto Fine leggermente più compatto per stare nell'header */
@@ -70,6 +77,14 @@
     padding: 8px 12px;
     font-size: 14px;
     flex-shrink: 0; /* Impedisce al pulsante di restringersi */
+}
+
+.btn-avvia {
+    background-color: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
 }
 
 /* --- Parte Inferiore (Timer Recupero) --- */

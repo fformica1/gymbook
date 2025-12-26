@@ -7,8 +7,8 @@
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" href="icon-browser.png">
     <link rel="apple-touch-icon" href="icon.png">
-    <link rel="stylesheet" href="css/global.css?v=1.4">
-    <link rel="stylesheet" href="css/components.css?v=1.4">
+    <link rel="stylesheet" href="css/global.css?v=1.5">
+    <link rel="stylesheet" href="css/components.css?v=1.5">
 </head>
 <body>
     <header class="app-header">
@@ -24,23 +24,58 @@
     </header>
     
     <div class="content-wrapper">
-        <section>
-            <h2>Crea Nuova Routine</h2>
-            <form id="routine-form-crea">
-                <label for="nome-routine">Nome Routine:</label>
-                <input type="text" id="nome-routine" name="nome-routine" placeholder="Es: Giorno A - Spinta">
-                <button type="submit" class="btn-blu">Crea Routine</button>
-            </form>
-        </section>
+        <div class="add-routine-section" style="margin-bottom: 20px;">
+            <button id="btn-open-create-routine-modal" class="btn-primary">Crea Nuova Routine</button>
+        </div>
 
         <hr> 
 
         <section>
-            <h2>Routine del Piano</h2>
+            <h2>Routine del Piano di Allenamento</h2>
             <div id="lista-routine-esistenti">
-                <p>Caricamento routine...</p>
+                <p>Caricamento routine di allenamento...</p>
             </div>
         </section>
+    </div>
+
+    <!-- Modal per creazione routine -->
+    <div id="create-routine-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h3>Crea Nuova Routine</h3>
+            <form id="routine-form-crea-modal">
+                <label for="nome-routine-modal">Nome Routine:</label>
+                <input type="text" id="nome-routine-modal" name="nome-routine" placeholder="Es: Giorno A - Spinta" required>
+                <div class="modal-actions">
+                    <button type="submit" class="btn-modal-confirm">Crea Routine</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Conferma Generico -->
+    <div id="confirmation-modal" class="modal">
+        <div class="modal-content">
+            <h3 id="confirm-title">Conferma</h3>
+            <p id="confirm-message">Sei sicuro?</p>
+            <div class="modal-actions">
+                <button id="btn-confirm-cancel" class="btn-grigio">Annulla</button>
+                <button id="btn-confirm-ok" class="btn-elimina">Elimina</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Prompt Generico (Modifica Nome) -->
+    <div id="prompt-modal" class="modal">
+        <div class="modal-content">
+            <h3 id="prompt-title">Modifica</h3>
+            <label id="prompt-message" for="prompt-input">Inserisci il nuovo nome:</label>
+            <textarea id="prompt-input" class="auto-expand" rows="1" style="width: 100%; margin-bottom: 20px;"></textarea>
+            <div class="modal-actions">
+                <button id="btn-prompt-cancel" class="btn-grigio">Annulla</button>
+                <button id="btn-prompt-ok" class="btn-modal-confirm">Salva</button>
+            </div>
+        </div>
     </div>
 
     <nav class="bottom-nav">
@@ -58,8 +93,8 @@
         </a>
     </nav>
 
-    <script src="js/utils.js?v=1.4"></script>
-    <script src="js/pages/routine.js?v=1.4"></script>
-    <script src="js/main.js?v=1.4"></script>
+    <script src="js/utils.js?v=1.5"></script>
+    <script src="js/pages/routine.js?v=1.5"></script>
+    <script src="js/main.js?v=1.5"></script>
 </body>
 </html>

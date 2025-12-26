@@ -7,8 +7,8 @@
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" href="icon-browser.png">
     <link rel="apple-touch-icon" href="icon.png">
-    <link rel="stylesheet" href="css/global.css?v=1.4">
-    <link rel="stylesheet" href="css/components.css?v=1.4">
+    <link rel="stylesheet" href="css/global.css?v=1.5">
+    <link rel="stylesheet" href="css/components.css?v=1.5">
 </head>
 <body>
     <header class="app-header">
@@ -34,6 +34,7 @@
                         <option value="core">Core</option>
                         <option value="dorso">Dorso</option>
                         <option value="femorali">Femorali</option>
+                        <option value="glutei">Glutei</option>
                         <option value="petto">Petto</option>
                         <option value="polpacci">Polpacci</option>
                         <option value="quadricipiti">Quadricipiti</option>
@@ -61,6 +62,7 @@
                     <option value="core">Core</option>
                     <option value="dorso">Dorso</option>
                     <option value="femorali">Femorali</option>
+                    <option value="glutei">Glutei</option>
                     <option value="petto">Petto</option>
                     <option value="polpacci">Polpacci</option>
                     <option value="quadricipiti">Quadricipiti</option>
@@ -68,7 +70,7 @@
                     <option value="tricipiti">Tricipiti</option>
                 </select>
                 <div class="modal-actions">
-                    <button type="submit" class="btn-primary">Crea Esercizio</button>
+                    <button type="submit" class="btn-modal-confirm">Crea Esercizio</button>
                 </div>
             </form>
         </div>
@@ -90,6 +92,7 @@
                     <option value="core">Core</option>
                     <option value="dorso">Dorso</option>
                     <option value="femorali">Femorali</option>
+                    <option value="glutei">Glutei</option>
                     <option value="petto">Petto</option>
                     <option value="polpacci">Polpacci</option>
                     <option value="quadricipiti">Quadricipiti</option>
@@ -97,9 +100,21 @@
                     <option value="tricipiti">Tricipiti</option>
                 </select>
                 <div class="modal-actions">
-                    <button type="submit" class="btn-primary">Salva Modifiche</button>
+                    <button type="submit" class="btn-modal-confirm">Salva Modifiche</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Modal Conferma Generico -->
+    <div id="confirmation-modal" class="modal">
+        <div class="modal-content">
+            <h3 id="confirm-title">Conferma</h3>
+            <p id="confirm-message">Sei sicuro?</p>
+            <div class="modal-actions">
+                <button id="btn-confirm-cancel" class="btn-grigio">Annulla</button>
+                <button id="btn-confirm-ok" class="btn-elimina">Elimina</button>
+            </div>
         </div>
     </div>
 
@@ -118,8 +133,8 @@
         </a>
     </nav>
 
-    <script src="js/utils.js?v=1.4"></script>
-    <script src="js/pages/exercises.js?v=1.4"></script>
-    <script src="js/main.js?v=1.4"></script>
+    <script src="js/utils.js?v=1.5"></script>
+    <script src="js/pages/exercises.js?v=1.5"></script>
+    <script src="js/main.js?v=1.5"></script>
 </body>
 </html>

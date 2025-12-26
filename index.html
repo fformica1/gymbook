@@ -9,9 +9,9 @@
     <link rel="apple-touch-icon" href="icon.png">
     
     <!-- 1. Carichiamo i CSS modulari -->
-    <link rel="stylesheet" href="css/global.css?v=1.4">
-    <link rel="stylesheet" href="css/components.css?v=1.4">
-    <link rel="stylesheet" href="css/pages/home.css?v=1.4">
+    <link rel="stylesheet" href="css/global.css?v=1.5">
+    <link rel="stylesheet" href="css/components.css?v=1.5">
+    <link rel="stylesheet" href="css/pages/home.css?v=1.5">
 </head>
 <body>
     <header class="app-header">
@@ -42,7 +42,9 @@
             <header class="workout-sticky-header">
                 <div class="workout-header"> 
                     <div class="content-wrapper">
-                        <h1 class="routine-title">[Nome Routine]</h1>
+                        <div class="banner-title-wrapper">
+                            <h1 class="routine-title">[Nome Routine]</h1>
+                        </div>
                         <div class="workout-info">
                             <span class="workout-timer">00:00:00</span>
                         </div>
@@ -78,8 +80,8 @@
     </nav>
 
     <!-- 2. Carichiamo i JS modulari nell'ordine corretto -->
-    <script src="js/utils.js?v=1.4"></script>
-    <script src="js/pages/home.js?v=1.4"></script> <!-- Logica specifica per la home -->
-    <script src="js/main.js?v=1.4"></script> <!-- Router principale -->
+    <script src="js/utils.js?v=1.5"></script>
+    <script src="js/pages/home.js?v=1.5"></script> <!-- Logica specifica per la home -->
+    <script src="js/main.js?v=1.5"></script> <!-- Router principale -->
 </body>
 </html>

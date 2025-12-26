@@ -87,6 +87,11 @@ body {
 .header-title-group {
     display: flex;
     align-items: center;
+    flex: 1; /* Occupa lo spazio disponibile */
+    min-width: 0; /* Permette al flex item di restringersi sotto il contenuto */
+    justify-content: center;
+    overflow: hidden; /* Maschera il contenuto in eccesso */
+    padding: 0 5px;
 }
 
 .header-icon-left, .header-icon-right-placeholder {
@@ -104,6 +109,11 @@ body {
 .app-header h1 {
     font-size: 26px;
     margin: 0;
+    white-space: nowrap; /* Forza il testo su una sola riga */
+    overflow: hidden;
+    text-overflow: ellipsis; /* Aggiunge i puntini ... se troppo lungo */
+    max-width: 100%;
+    text-align: center;
 }
 
 /* --- Navbar Inferiore --- */
@@ -177,6 +187,9 @@ body {
     font-weight: 600;
     line-height: 1.2;
     color: var(--text); /* Si adatta automaticamente al tema */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .exercise-group {

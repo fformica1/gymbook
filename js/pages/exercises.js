@@ -42,7 +42,12 @@ window.setupEserciziPage = function() {
             { id: 'def_33', nome: 'Spinte Panca Inclinata', gruppo: 'petto' },
             { id: 'def_34', nome: 'Chest Press', gruppo: 'petto' },
             { id: 'def_35', nome: 'Lento Avanti', gruppo: 'spalle' },
-            { id: 'def_36', nome: 'Shoulder Press', gruppo: 'spalle' }
+            { id: 'def_36', nome: 'Shoulder Press', gruppo: 'spalle' },
+            { id: 'def_37', nome: 'Hip Thrust', gruppo: 'glutei' },
+            { id: 'def_38', nome: 'Glute Bridge', gruppo: 'glutei' },
+            { id: 'def_39', nome: 'Slanci ai Cavi', gruppo: 'glutei' },
+            { id: 'def_40', nome: 'Abductor Machine', gruppo: 'glutei' },
+            { id: 'def_41', nome: 'Step Up', gruppo: 'glutei' }
         ];
         saveToLocalStorage('elencoEsercizi', defaultExercises);
     }
@@ -183,9 +188,9 @@ window.setupEserciziPage = function() {
             div.className = 'list-item-container';
             div.style.cssText = "display: flex; align-items: center; justify-content: space-between; padding: 6px 10px;";
             div.innerHTML = `
-                <label style="display: flex; align-items: center; flex-grow: 1; margin: 0; cursor: ${selectionMode ? 'pointer' : 'default'};">
+                <label style="display: flex; align-items: center; flex-grow: 1; margin: 0; cursor: ${selectionMode ? 'pointer' : 'default'}; overflow: hidden;">
                     ${selectionMode ? `<input type="checkbox" data-id="${ex.id}" ${isChecked ? 'checked' : ''} style="transform: scale(1.3); margin-right: 12px;">` : ''}
-                    <div style="display: flex; flex-direction: column;">
+                    <div style="display: flex; flex-direction: column; overflow: hidden; min-width: 0; flex: 1;">
                         <span class="exercise-name">${ex.nome}</span>
                         <span class="exercise-group">${ex.gruppo}</span>
                     </div>
@@ -221,13 +226,14 @@ window.setupEserciziPage = function() {
                 editModal.style.display = 'flex';
             });
             div.querySelector('.btn-elimina-esercizio').addEventListener('click', (e) => {
-                if (confirm("Eliminare esercizio?")) {
+                showConfirmModal("Elimina Esercizio", "Sei sicuro di voler eliminare questo esercizio dall'elenco globale?", () => {
                     let all = getFromLocalStorage('elencoEsercizi');
                     saveToLocalStorage('elencoEsercizi', all.filter(x => x.id !== ex.id));
                     renderEsercizi();
-                }
+                });
             });
             listaEserciziDiv.appendChild(div);
+            animateTitleIfLong(div.querySelector('.exercise-name'));
         });
     }
 };

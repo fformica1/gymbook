@@ -7,10 +7,10 @@
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" href="icon-browser.png">
     <link rel="apple-touch-icon" href="icon.png">
-    <link rel="stylesheet" href="css/global.css?v=1.4">
-    <link rel="stylesheet" href="css/components.css?v=1.4">
-    <link rel="stylesheet" href="css/pages/workout.css?v=1.4"> <!-- Riusiamo stili simili -->
-    <link rel="stylesheet" href="css/pages/routine-dettaglio.css?v=1.4">
+    <link rel="stylesheet" href="css/global.css?v=1.5">
+    <link rel="stylesheet" href="css/components.css?v=1.5">
+    <link rel="stylesheet" href="css/pages/workout.css?v=1.5"> <!-- Riusiamo stili simili -->
+    <link rel="stylesheet" href="css/pages/routine-dettaglio.css?v=1.5">
 </head>
 <body class="page-routine-dettaglio">
     <header class="app-header">
@@ -29,11 +29,11 @@
     
             <div class="content-wrapper">
     
-                <article class="add-exercise-section">
+                <div class="add-exercise-section" style="margin-bottom: 20px;">
     
                     <button id="btn-open-exercise-modal" class="btn-primary">Aggiungi Esercizi</button>
     
-                </article>
+                </div>
     
         
     
@@ -47,6 +47,18 @@
     
         </div>
     
+    <!-- Modal Conferma Generico -->
+    <div id="confirmation-modal" class="modal">
+        <div class="modal-content">
+            <h3 id="confirm-title">Conferma</h3>
+            <p id="confirm-message">Sei sicuro?</p>
+            <div class="modal-actions">
+                <button id="btn-confirm-cancel" class="btn-grigio">Annulla</button>
+                <button id="btn-confirm-ok" class="btn-elimina">Elimina</button>
+            </div>
+        </div>
+    </div>
+
     <nav class="bottom-nav">
         <a href="index.html" class="nav-item">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h7.5" /></svg>
@@ -62,8 +74,8 @@
         </a>
     </nav>
 
-    <script src="js/utils.js?v=1.4"></script>
-    <script src="js/pages/routine.js?v=1.4"></script>
-    <script src="js/main.js?v=1.4"></script>
+    <script src="js/utils.js?v=1.5"></script>
+    <script src="js/pages/routine.js?v=1.5"></script>
+    <script src="js/main.js?v=1.5"></script>
 </body>
 </html>

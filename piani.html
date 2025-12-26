@@ -7,8 +7,8 @@
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" href="icon-browser.png">
     <link rel="apple-touch-icon" href="icon.png">
-    <link rel="stylesheet" href="css/global.css?v=1.4">
-    <link rel="stylesheet" href="css/components.css?v=1.4">
+    <link rel="stylesheet" href="css/global.css?v=1.5">
+    <link rel="stylesheet" href="css/components.css?v=1.5">
 </head>
 <body>
     <header class="app-header">
@@ -17,30 +17,66 @@
                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" /></svg>
             </a>
             <div class="header-title-group">
-                <h1>Piani</h1>
+                <h1>Piani di Allenamento</h1>
             </div>
             <div class="header-icon-right-placeholder"></div>
         </div>
     </header>
     
     <div class="content-wrapper">
-        <section>
-            <h2>Crea Nuovo Piano</h2> 
-            <form id="piani-form-crea-piano">
-                <label for="nome-piano">Nome del Piano:</label>
-                <input type="text" id="nome-piano" name="nome-piano" placeholder="Es: Scheda Massa Inverno">
-                <button type="submit" class="btn-blu">Crea Piano</button>
-            </form>
-        </section>
+        <div class="add-plan-section" style="margin-bottom: 20px;">
+            <button id="btn-open-create-plan-modal" class="btn-primary">Crea Nuovo Piano di Allenamento</button>
+        </div>
 
         <hr> 
 
         <section>
-            <h2>Piani Esistenti</h2>
+            <h2>Piani di Allenamento Esistenti</h2>
+            <p style="color: var(--text-dim); font-size: 14px; margin-top: -10px; margin-bottom: 15px;">Seleziona il piano di allenamento da vedere nella Home</p>
             <div id="lista-piani-esistenti">
-                <p>Caricamento piani...</p>
+                <p>Caricamento piani di allenamento...</p>
             </div>
         </section>
+    </div>
+
+    <!-- Modal per creazione piano -->
+    <div id="create-plan-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h3>Crea Nuovo Piano</h3>
+            <form id="piani-form-crea-piano-modal">
+                <label for="nome-piano-modal">Nome del Piano:</label>
+                <input type="text" id="nome-piano-modal" name="nome-piano" placeholder="Es: Scheda Massa Inverno (4 mesi)" required>
+                <div class="modal-actions">
+                    <button type="submit" class="btn-modal-confirm">Crea Piano</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Conferma Generico -->
+    <div id="confirmation-modal" class="modal">
+        <div class="modal-content">
+            <h3 id="confirm-title">Conferma</h3>
+            <p id="confirm-message">Sei sicuro?</p>
+            <div class="modal-actions">
+                <button id="btn-confirm-cancel" class="btn-grigio">Annulla</button>
+                <button id="btn-confirm-ok" class="btn-elimina">Elimina</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Prompt Generico (Modifica Nome) -->
+    <div id="prompt-modal" class="modal">
+        <div class="modal-content">
+            <h3 id="prompt-title">Modifica</h3>
+            <label id="prompt-message" for="prompt-input">Inserisci il nuovo nome:</label>
+            <textarea id="prompt-input" class="auto-expand" rows="1" style="width: 100%; margin-bottom: 20px;"></textarea>
+            <div class="modal-actions">
+                <button id="btn-prompt-cancel" class="btn-grigio">Annulla</button>
+                <button id="btn-prompt-ok" class="btn-modal-confirm">Salva</button>
+            </div>
+        </div>
     </div>
 
     <nav class="bottom-nav">
@@ -58,8 +94,8 @@
         </a>
     </nav>
 
-    <script src="js/utils.js?v=1.4"></script>
-    <script src="js/pages/plans.js?v=1.4"></script>
-    <script src="js/main.js?v=1.4"></script>
+    <script src="js/utils.js?v=1.5"></script>
+    <script src="js/pages/plans.js?v=1.5"></script>
+    <script src="js/main.js?v=1.5"></script>
 </body>
 </html>

@@ -45,13 +45,19 @@ window.setupAllenamentoPage = function() {
         backBtn.className = 'btn-back-arrow';
         backBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" /></svg>`;
         
+        // Container per il titolo per mascherare lo scorrimento ed evitare sovrapposizioni
+        const titleContainer = document.createElement('div');
+        titleContainer.style.cssText = 'flex: 1; min-width: 0; overflow: hidden; display: flex;';
+
         titleElement.parentNode.insertBefore(wrapper, titleElement);
         wrapper.appendChild(backBtn);
-        wrapper.appendChild(titleElement);
+        wrapper.appendChild(titleContainer);
+        titleContainer.appendChild(titleElement);
     }
 
     // UI Elements
     document.querySelector('.routine-title').textContent = routine.nome;
+    animateTitleIfLong(document.querySelector('.routine-title'));
     const workoutTimerEl = document.querySelector('.workout-timer');
     const btnEndWorkout = document.querySelector('.btn-end-workout');
     const recoveryTimerEl = document.querySelector('.recovery-timer .timer-display');
@@ -65,6 +71,32 @@ window.setupAllenamentoPage = function() {
     let recoveryTimerInterval;
     let workoutState = getFromLocalStorage('activeWorkoutState') || null;
     const storico = getFromLocalStorage('storicoAllenamenti') || [];
+
+    // Controllo Modalità Anteprima (se c'è un allenamento attivo ma stiamo visualizzando un'altra routine)
+    const activeWorkout = getFromLocalStorage('activeWorkout');
+    const isPreviewMode = activeWorkout && (activeWorkout.pianoId !== pianoId || activeWorkout.routineId !== routineId);
+
+    if (isPreviewMode) {
+        workoutState = null; // Non caricare lo stato dell'allenamento attivo
+    }
+
+    // Funzione per aggiornare lo stato del pulsante (AVVIA / FINE)
+    function updateWorkoutButton() {
+        if (isPreviewMode) {
+            btnEndWorkout.style.display = 'none';
+            return;
+        }
+        const isRunning = !!getFromLocalStorage('workoutStartTime');
+        if (isRunning) {
+            btnEndWorkout.textContent = "FINE";
+            btnEndWorkout.classList.remove('btn-avvia');
+            btnEndWorkout.classList.add('btn-elimina');
+        } else {
+            btnEndWorkout.textContent = "AVVIA";
+            btnEndWorkout.classList.remove('btn-elimina');
+            btnEndWorkout.classList.add('btn-avvia');
+        }
+    }
 
     container.innerHTML = '';
 
@@ -81,28 +113,32 @@ window.setupAllenamentoPage = function() {
             const prevData = lastPerformance && lastPerformance.serie[index] ? `${lastPerformance.serie[index].kg}kg x ${lastPerformance.serie[index].reps}` : '-';
             const isChecked = s.completed ? 'checked' : '';
             const rowClass = s.completed ? 'set-row completed' : 'set-row';
+            
+            const disabledAttr = isPreviewMode ? 'disabled' : '';
+            const hideStyle = isPreviewMode ? 'style="display:none"' : '';
+
             return `
                 <div class="${rowClass}">
                     <span class="set-number">${index + 1}</span>
                     <span class="set-previous">${prevData}</span>
                     <div class="set-inputs">
                         <div class="adjust-control">
-                            <button class="btn-weight-adjust" data-adjust="-2.5">-</button>
-                            <input type="number" class="set-input weight-input" value="${s.kg}" inputmode="decimal" step="any">
-                            <button class="btn-weight-adjust" data-adjust="2.5">+</button>
+                            <button class="btn-weight-adjust" data-adjust="-2.5" ${hideStyle}>-</button>
+                            <input type="number" class="set-input weight-input" value="${s.kg}" inputmode="decimal" step="any" ${disabledAttr}>
+                            <button class="btn-weight-adjust" data-adjust="2.5" ${hideStyle}>+</button>
                         </div>
                         <div class="adjust-control">
-                            <button class="btn-reps-adjust" data-adjust="-1">-</button>
-                            <input type="number" class="set-input reps-input" value="${s.reps}" inputmode="numeric">
-                            <button class="btn-reps-adjust" data-adjust="1">+</button>
+                            <button class="btn-reps-adjust" data-adjust="-1" ${hideStyle}>-</button>
+                            <input type="number" class="set-input reps-input" value="${s.reps}" inputmode="numeric" ${disabledAttr}>
+                            <button class="btn-reps-adjust" data-adjust="1" ${hideStyle}>+</button>
                         </div>
                     </div>
-                    <input type="checkbox" class="set-check" ${isChecked}>
+                    <input type="checkbox" class="set-check" ${isChecked} ${disabledAttr}>
                 </div>`;
         }).join('');
 
         // HTML per la riga di regolazione rapida (Quick Adjust)
-        const quickAdjustHtml = `
+        const quickAdjustHtml = isPreviewMode ? '' : `
             <div class="quick-adjust-row">
                 <button class="btn-remove-set btn-inline-set btn-remove-set-inline" title="Rimuovi ultima serie">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg>
@@ -125,8 +161,8 @@ window.setupAllenamentoPage = function() {
 
         card.innerHTML = `
             <div class="esercizio-card-header"><h2>${esercizio.nome}</h2></div>
-            <div class="exercise-details"><textarea placeholder="Note" rows="1" class="auto-expand">${workoutState?.esercizi[esercizio.id]?.note || esercizio.note}</textarea></div>
-            <div class="recovery-time-display"><span>Tempo di Recupero: <input type="number" class="recovery-input" value="${workoutState?.esercizi[esercizio.id]?.recupero || esercizio.recupero}" inputmode="numeric"> s</span></div>
+            <div class="exercise-details"><textarea placeholder="Note" rows="1" class="auto-expand" ${isPreviewMode ? 'disabled' : ''}>${workoutState?.esercizi[esercizio.id]?.note || esercizio.note}</textarea></div>
+            <div class="recovery-time-display"><span>Tempo di Recupero: <input type="number" class="recovery-input" value="${workoutState?.esercizi[esercizio.id]?.recupero || esercizio.recupero}" inputmode="numeric" ${isPreviewMode ? 'disabled' : ''}> s</span></div>
             <div class="sets-header"><span class="set-number-header">Set</span><span class="set-previous-header">Precedente</span><div class="set-inputs-header"><span>Kg</span><span>Reps</span></div><span class="set-check-header">✓</span></div>
             <div class="sets-container">${serieHtml}</div>
             ${quickAdjustHtml}
@@ -136,19 +172,25 @@ window.setupAllenamentoPage = function() {
 
         // Listeners locali per card
         const setsContainer = card.querySelector('.sets-container');
-        card.querySelector('.btn-add-set').addEventListener('click', () => {
-            const rowCount = setsContainer.children.length;
-            const lastRow = setsContainer.lastElementChild;
-            const kgValue = lastRow ? lastRow.querySelectorAll('.set-input')[0].value : '';
-            const repsValue = lastRow ? lastRow.querySelectorAll('.set-input')[1].value : '';
-            const newRow = document.createElement('div');
-            newRow.className = 'set-row';
-            newRow.innerHTML = `<span class="set-number">${rowCount + 1}</span><span class="set-previous">-</span><div class="set-inputs"><div class="adjust-control"><button class="btn-weight-adjust" data-adjust="-2.5">-</button><input type="number" class="set-input weight-input" value="${kgValue}" inputmode="decimal" step="any"><button class="btn-weight-adjust" data-adjust="2.5">+</button></div><div class="adjust-control"><button class="btn-reps-adjust" data-adjust="-1">-</button><input type="number" class="set-input reps-input" value="${repsValue}" inputmode="numeric"><button class="btn-reps-adjust" data-adjust="1">+</button></div></div><input type="checkbox" class="set-check">`;
-            setsContainer.appendChild(newRow);
-        });
-        card.querySelector('.btn-remove-set').addEventListener('click', () => {
-            if (setsContainer.children.length > 0) { setsContainer.lastElementChild.remove(); saveCurrentWorkoutState(); }
-        });
+        const btnAddSet = card.querySelector('.btn-add-set');
+        if (btnAddSet) {
+            btnAddSet.addEventListener('click', () => {
+                const rowCount = setsContainer.children.length;
+                const lastRow = setsContainer.lastElementChild;
+                const kgValue = lastRow ? lastRow.querySelectorAll('.set-input')[0].value : '';
+                const repsValue = lastRow ? lastRow.querySelectorAll('.set-input')[1].value : '';
+                const newRow = document.createElement('div');
+                newRow.className = 'set-row';
+                newRow.innerHTML = `<span class="set-number">${rowCount + 1}</span><span class="set-previous">-</span><div class="set-inputs"><div class="adjust-control"><button class="btn-weight-adjust" data-adjust="-2.5">-</button><input type="number" class="set-input weight-input" value="${kgValue}" inputmode="decimal" step="any"><button class="btn-weight-adjust" data-adjust="2.5">+</button></div><div class="adjust-control"><button class="btn-reps-adjust" data-adjust="-1">-</button><input type="number" class="set-input reps-input" value="${repsValue}" inputmode="numeric"><button class="btn-reps-adjust" data-adjust="1">+</button></div></div><input type="checkbox" class="set-check">`;
+                setsContainer.appendChild(newRow);
+            });
+        }
+        const btnRemoveSet = card.querySelector('.btn-remove-set');
+        if (btnRemoveSet) {
+            btnRemoveSet.addEventListener('click', () => {
+                if (setsContainer.children.length > 0) { setsContainer.lastElementChild.remove(); saveCurrentWorkoutState(); }
+            });
+        }
     });
 
     // Ridimensiona inizialmente tutte le textarea per adattarle al contenuto esistente
@@ -161,6 +203,8 @@ window.setupAllenamentoPage = function() {
     let currentActiveCard = null;
 
     function updateExerciseFocus(forceCard = null) {
+        if (isPreviewMode) return;
+
         const cards = container.querySelectorAll('.esercizio-card');
         
         if (forceCard) {
@@ -199,7 +243,7 @@ window.setupAllenamentoPage = function() {
         const card = e.target.closest('.esercizio-card');
         if (card) {
             updateExerciseFocus(card);
-            card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            if (!isPreviewMode) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
     });
     
@@ -210,6 +254,7 @@ window.setupAllenamentoPage = function() {
 
     // Scroll automatico all'esercizio in corso quando si rientra nella pagina
     setTimeout(() => {
+        if (isPreviewMode) return;
         const activeCard = container.querySelector('.esercizio-card:not(.dimmed)');
         if (activeCard) {
             activeCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -319,6 +364,7 @@ window.setupAllenamentoPage = function() {
                 saveToLocalStorage('workoutStartTime', Date.now());
                 saveToLocalStorage('activeWorkout', { pianoId, routineId });
                 startWorkoutTimer();
+                updateWorkoutButton();
             }
 
             saveCurrentWorkoutState();
@@ -378,6 +424,11 @@ window.setupAllenamentoPage = function() {
 
     // Timer Functions
     function startWorkoutTimer() {
+        if (isPreviewMode) {
+            workoutTimerEl.textContent = "Anteprima";
+            return;
+        }
+
         let startTime = getFromLocalStorage('workoutStartTime');
         
         if (!startTime) {
@@ -440,7 +491,19 @@ window.setupAllenamentoPage = function() {
         saveToLocalStorage('activeWorkoutState', currentState);
     }
 
+    // Gestione Click Pulsante AVVIA / FINE
     btnEndWorkout.addEventListener('click', () => {
+        if (isPreviewMode) return;
+
+        // Se l'allenamento non è avviato, avvialo
+        if (!getFromLocalStorage('workoutStartTime')) {
+            saveToLocalStorage('workoutStartTime', Date.now());
+            saveToLocalStorage('activeWorkout', { pianoId, routineId });
+            startWorkoutTimer();
+            updateWorkoutButton();
+            return;
+        }
+
         if (wakeLock) wakeLock.release();
         clearInterval(workoutInterval);
         // Pulisce lo stato dell'allenamento attivo
@@ -522,5 +585,6 @@ window.setupAllenamentoPage = function() {
     });
 
     startWorkoutTimer();
-    if (getFromLocalStorage('recoveryEndTime')) startRecoveryTimer(0, true);
+    if (!isPreviewMode && getFromLocalStorage('recoveryEndTime')) startRecoveryTimer(0, true);
+    updateWorkoutButton(); // Imposta lo stato iniziale del pulsante
 };

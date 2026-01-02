@@ -29,6 +29,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Gestione Navigazione Globale (Usa replace per non accumulare history) ---
     // Questo impedisce che si crei una cronologia "indietro" navigando nell'app
     document.body.addEventListener('click', (e) => {
+        // Richiedi permesso notifiche al primo click utile nell'app
+        if (typeof requestNotificationPermission === 'function') {
+            requestNotificationPermission();
+        }
+
         const link = e.target.closest('a');
         if (!link) return;
 
@@ -99,17 +104,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Gestione Tasto Indietro Nativo (Tree Navigation) ---
     manageNativeBackButton(currentPage);
+
+    // --- Avvia il controllo globale del timer (Background Check) ---
+    if (typeof startGlobalTimerCheck === 'function') startGlobalTimerCheck();
 });
 
 function manageNativeBackButton(currentPage) {
     // Inseriamo uno stato fittizio nella history per intercettare il "back"
-    // Lo facciamo su TUTTE le pagine, inclusa la Home, per evitare che dalla Home si torni a pagine interne
-    history.pushState(null, null, location.href);
+    // Usiamo un oggetto state per identificare che è uno stato gestito da noi
+    const state = { page: currentPage, gymbook: true };
+    
+    // Imposta il ripristino dello scroll manuale per evitare salti
+    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+
+    // Spingiamo lo stato per creare il "cuscinetto" di navigazione
+    history.pushState(state, '', location.href);
 
     window.addEventListener('popstate', (event) => {
         // Impediamo al browser di tornare indietro nella history reale
         // e reinseriamo lo stato per mantenere il blocco se l'utente preme ancora back
-        history.pushState(null, null, location.href);
+        history.pushState(state, '', location.href);
 
         const params = new URLSearchParams(window.location.search);
         const pianoId = params.get('pianoId');

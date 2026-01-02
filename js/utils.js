@@ -26,6 +26,17 @@ const applyTheme = () => {
     document.documentElement.setAttribute('data-theme', savedTheme);
 };
 
+// --- Gestione Permessi Notifiche ---
+function requestNotificationPermission() {
+    if ('Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+        Notification.requestPermission().then(permission => {
+            if (permission === 'granted') {
+                console.log("Permesso notifiche concesso");
+            }
+        });
+    }
+}
+
 // --- Funzione per l'avviso acustico ---
 let notificationAudio; // Variabile per l'elemento audio
 
@@ -38,6 +49,41 @@ function playNotificationSound() {
     notificationAudio.play().catch(error => {
         console.error("Errore nella riproduzione dell'audio:", error);
     });
+
+    // Invia anche una notifica di sistema se possibile
+    if ('Notification' in window && Notification.permission === 'granted') {
+        // Invia notifica solo se la pagina è nascosta o se l'utente lo desidera sempre
+        if (document.visibilityState === 'hidden') {
+            try {
+                // Registrazione SW necessaria per notifiche su Android PWA in alcuni casi, 
+                // ma new Notification funziona spesso anche direttamente.
+                navigator.serviceWorker.ready.then(registration => {
+                    // Calcola l'URL dell'allenamento attivo per il redirect
+                    const activeWorkout = getFromLocalStorage('activeWorkout');
+                    const targetUrl = activeWorkout 
+                        ? `allenamento.html?pianoId=${activeWorkout.pianoId}&routineId=${activeWorkout.routineId}` 
+                        : 'index.html';
+
+                    registration.showNotification('Recupero Terminato!', {
+                        body: 'È ora di tornare ad allenarsi!',
+                        icon: 'icon.png',
+                        vibrate: [200, 100, 200],
+                        tag: 'recovery-timer',
+                        data: { url: targetUrl } // Passa l'URL per il click
+                    });
+                }).catch(() => {
+                    // Fallback standard
+                    new Notification("Recupero Terminato!", {
+                        body: "È ora di tornare ad allenarsi!",
+                        icon: "icon.png",
+                        vibrate: [200, 100, 200]
+                    });
+                });
+            } catch (e) {
+                console.log("Errore invio notifica:", e);
+            }
+        }
+    }
 }
 
 // --- Funzione Modale di Conferma Personalizzato ---
@@ -178,4 +224,23 @@ function showPromptModal(title, message, defaultValue, onConfirm) {
             closeModal();
         }
     };
+}
+
+// --- Loop Globale Controllo Timer ---
+// Questo assicura che il timer venga controllato su QUALSIASI pagina
+function startGlobalTimerCheck() {
+    setInterval(() => {
+        const recoveryEndTime = getFromLocalStorage('recoveryEndTime');
+        if (recoveryEndTime) {
+            const now = Date.now();
+            // Se il tempo è scaduto
+            if (now >= recoveryEndTime) {
+                const played = getFromLocalStorage('recoverySoundPlayed');
+                if (!played) {
+                    playNotificationSound();
+                    saveToLocalStorage('recoverySoundPlayed', true);
+                }
+            }
+        }
+    }, 1000);
 }

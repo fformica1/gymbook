@@ -437,6 +437,58 @@ window.setupAllenamentoPage = function() {
         localStorage.removeItem('recoverySoundPlayed');
     });
 
+    // --- Funzione Notifica Silenziosa (Background Monitor) ---
+    function updateSilentNotification() {
+        // Aggiorna solo se la pagina è nascosta (background) per risparmiare risorse
+        if (document.visibilityState === 'visible') return;
+        
+        if (!('Notification' in window) || Notification.permission !== 'granted') return;
+
+        // 1. Trova il prossimo set da fare
+        let nextSetInfo = "Allenamento Completato";
+        const cards = container.querySelectorAll('.esercizio-card');
+        let found = false;
+        
+        for (const card of cards) {
+            if (found) break;
+            const rows = card.querySelectorAll('.set-row');
+            for (const row of rows) {
+                if (row.querySelector('.btn-check-set').dataset.completed !== 'true') {
+                    const exerciseName = card.querySelector('h2').textContent;
+                    const kg = row.querySelector('.weight-input').value;
+                    const reps = row.querySelector('.reps-input').value;
+                    nextSetInfo = `${exerciseName}: ${kg}kg x ${reps}`;
+                    found = true;
+                    break;
+                }
+            }
+        }
+
+        // 2. Determina il titolo (Recupero o Allenamento)
+        let title = `In Corso: ${routine.nome}`;
+        const recoveryEndTime = getFromLocalStorage('recoveryEndTime');
+        if (recoveryEndTime && recoveryEndTime > Date.now()) {
+            const remaining = Math.ceil((recoveryEndTime - Date.now()) / 1000);
+            const min = Math.floor(remaining / 60);
+            const sec = String(remaining % 60).padStart(2, '0');
+            title = `Recupero: ${min}:${sec}`;
+        }
+
+        // 3. Invia/Aggiorna notifica tramite Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.ready.then(registration => {
+                registration.showNotification(title, {
+                    body: found ? `Prossimo: ${nextSetInfo}` : nextSetInfo,
+                    icon: 'icon.png',
+                    tag: 'workout-status', // Tag fisso per sovrascrivere la stessa notifica
+                    renotify: false,       // IMPORTANTE: Niente suono/vibrazione all'aggiornamento
+                    silent: true,          // Notifica silenziosa
+                    data: { url: window.location.href } // Passa l'URL corrente per il click
+                });
+            });
+        }
+    }
+
     // Timer Functions
     function startWorkoutTimer() {
         if (isPreviewMode) {
@@ -455,6 +507,9 @@ window.setupAllenamentoPage = function() {
         const updateTimer = () => {
             const totalSeconds = Math.floor((Date.now() - startTime) / 1000);
             workoutTimerEl.textContent = `${String(Math.floor(totalSeconds / 3600)).padStart(2, '0')}:${String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0')}`;
+            
+            // Aggiorna la notifica di background ogni secondo (se l'app è nascosta)
+            updateSilentNotification();
         };
         updateTimer();
         if (workoutInterval) clearInterval(workoutInterval);
@@ -480,7 +535,6 @@ window.setupAllenamentoPage = function() {
                 recoveryTimerContainer.classList.add('timer-finished');
                 if (workoutHeader) workoutHeader.classList.add('timer-finished');
                 if (workoutStickyHeader) workoutStickyHeader.classList.add('timer-finished');
-                if (!getFromLocalStorage('recoverySoundPlayed')) { playNotificationSound(); saveToLocalStorage('recoverySoundPlayed', true); }
             } else {
                 recoveryTimerEl.textContent = `${String(Math.floor(Math.round(remainingMs / 1000) / 60)).padStart(2, '0')}:${String(Math.round(remainingMs / 1000) % 60).padStart(2, '0')}`;
             }
@@ -527,6 +581,15 @@ window.setupAllenamentoPage = function() {
         localStorage.removeItem('recoverySoundPlayed');
         localStorage.removeItem('recoveryEndTime');
         localStorage.removeItem('activeWorkoutState');
+
+        // Rimuovi la notifica persistente
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.ready.then(registration => {
+                registration.getNotifications({tag: 'workout-status'}).then(notifications => {
+                    notifications.forEach(n => n.close());
+                });
+            });
+        }
 
         const workoutLog = {
             id: Date.now().toString(),

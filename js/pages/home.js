@@ -234,10 +234,6 @@ window.setupHomePage = function() {
                             recoveryDisplay.textContent = '00:00';
                             recoveryContainer.classList.add('timer-finished');
                             workoutBanner.classList.add('timer-finished');
-                            if (!getFromLocalStorage('recoverySoundPlayed')) {
-                                playNotificationSound();
-                                saveToLocalStorage('recoverySoundPlayed', true);
-                            }
                         }
                     } else {
                         recoveryDisplay.textContent = '00:00';

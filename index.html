@@ -9,9 +9,9 @@
     <link rel="apple-touch-icon" href="icon.png">
     
     <!-- 1. Carichiamo i CSS modulari -->
-    <link rel="stylesheet" href="css/global.css?v=1.8">
-    <link rel="stylesheet" href="css/components.css?v=1.8">
-    <link rel="stylesheet" href="css/pages/home.css?v=1.8">
+    <link rel="stylesheet" href="css/global.css?v=1.9">
+    <link rel="stylesheet" href="css/components.css?v=1.9">
+    <link rel="stylesheet" href="css/pages/home.css?v=1.9">
 </head>
 <body>
     <header class="app-header">
@@ -79,9 +79,22 @@
         </a>
     </nav>
 
+    <!-- Modale Fine Allenamento -->
+    <div id="end-workout-modal" class="modal">
+        <div class="modal-content">
+            <h3 style="margin-top: 0;">Allenamento Terminato</h3>
+            <p>Vuoi salvare i progressi nel diario?</p>
+            <div class="modal-actions" style="flex-direction: column; gap: 10px;">
+                <button id="btn-end-save" class="btn-primary">Salva e Termina</button>
+                <button id="btn-end-discard" class="btn-elimina" style="width: 100%;">Non Salvare</button>
+                <button id="btn-end-cancel" class="btn-grigio" style="width: 100%;">Annulla</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 2. Carichiamo i JS modulari nell'ordine corretto -->
-    <script src="js/utils.js?v=1.8"></script>
-    <script src="js/pages/home.js?v=1.8"></script> <!-- Logica specifica per la home -->
-    <script src="js/main.js?v=1.8"></script> <!-- Router principale -->
+    <script src="js/utils.js?v=1.9"></script>
+    <script src="js/pages/home.js?v=1.9"></script> <!-- Logica specifica per la home -->
+    <script src="js/main.js?v=1.9"></script> <!-- Router principale -->
 </body>
 </html>

@@ -150,10 +150,14 @@ body.page-routine-dettaglio .esercizio-card {
     background: transparent;
     border: 1px solid var(--border-light);
     border-radius: 6px;
-    padding: 8px;
+    padding: 8px 12px;
     color: var(--text);
     box-sizing: border-box;
     display: block;
+    font-family: inherit;
+    min-height: 36px;
+    line-height: 1.4;
+    height: auto;
 }
 
 /* Input Recupero */
@@ -268,18 +272,6 @@ input.set-input {
 .add-exercise-container {
     padding: 30px 0;
     text-align: center;
-}
-
-.btn-add-exercise-large {
-    background-color: var(--card-bg);
-    border: 1px solid var(--accent);
-    color: var(--accent);
-    padding: 15px 30px;
-    border-radius: 12px;
-    font-size: 18px;
-    font-weight: bold;
-    width: 100%;
-    cursor: pointer;
 }
 
 /* Quick Adjust Row (Solo bottoni add/remove set) */

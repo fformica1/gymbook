@@ -76,6 +76,23 @@ window.setupAllenamentoPage = function() {
     let workoutState = getFromLocalStorage('activeWorkoutState') || null;
     const storico = getFromLocalStorage('storicoAllenamenti') || [];
 
+    // --- Silent Audio Hack (Per mantenere attivo il timer in background) ---
+    // Un brevissimo file MP3 di silenzio codificato in base64
+    const silentAudioSrc = 'data:audio/mpeg;base64,SUQzBAAAAAABAFRYWFgAAAASAAADbWFqb3JfYnJhbmQAbXA0MgBUWFhYAAAAEQAAA21pbm9yX3ZlcnNpb24AMABUWFhYAAAAHAAAA2NvbXBhdGlibGVfYnJhbmRzAGlzb21tcDQyAFRTU0UAAAAPAAADTGF2ZjU3LjU2LjEwMAAAAAAAAAAAAAAA//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq';
+    let silentAudio = new Audio(silentAudioSrc);
+    silentAudio.loop = true;
+
+    function enableBackgroundMode() {
+        // Avvia l'audio silenzioso solo se non è già in riproduzione
+        if (silentAudio.paused) {
+            silentAudio.play().catch(e => console.log("Silent audio play failed (user interaction needed):", e));
+        }
+    }
+    function disableBackgroundMode() {
+        silentAudio.pause();
+        silentAudio.currentTime = 0;
+    }
+
     // Controllo Modalità Anteprima (se c'è un allenamento attivo ma stiamo visualizzando un'altra routine)
     const activeWorkout = getFromLocalStorage('activeWorkout');
     const isPreviewMode = activeWorkout && (activeWorkout.pianoId !== pianoId || activeWorkout.routineId !== routineId);
@@ -121,7 +138,9 @@ window.setupAllenamentoPage = function() {
 
     // Render Esercizi
     routine.esercizi.forEach(esercizio => {
-        const allPerformances = storico.flatMap(log => log.esercizi).filter(e => e.esercizioId === esercizio.esercizioId);
+        // Filtra lo storico per considerare solo esecuzioni avvenute in QUESTA routine
+        const logsDiQuestaRoutine = storico.filter(log => log.routineId === routineId);
+        const allPerformances = logsDiQuestaRoutine.flatMap(log => log.esercizi).filter(e => e.esercizioId === esercizio.esercizioId);
         const lastPerformance = allPerformances[0];
         const card = document.createElement('article');
         card.className = 'esercizio-card';
@@ -140,7 +159,7 @@ window.setupAllenamentoPage = function() {
             return `
                 <div class="${rowClass}">
                     <span class="set-number">${index + 1}</span>
-                    <span class="set-previous">${prevData}</span>
+                    <span class="set-previous clickable-history" data-exercise-id="${esercizio.id}" data-set-index="${index}">${prevData}</span>
                     <div class="set-inputs">
                         <div class="adjust-control">
                             <button class="btn-weight-adjust" data-adjust="-2.5" ${hideStyle}>-</button>
@@ -274,6 +293,7 @@ window.setupAllenamentoPage = function() {
         const repsAdjustBtn = e.target.closest('.btn-reps-adjust');
         const quickAdjustBtn = e.target.closest('.btn-quick-adjust');
         const card = e.target.closest('.esercizio-card');
+        const historySpan = e.target.closest('.clickable-history');
 
         // 1. Handle Set Completion Check
         if (checkBtn) {
@@ -387,6 +407,40 @@ window.setupAllenamentoPage = function() {
             return;
         }
 
+        // 5. Handle History Click (Popup storico ultimi 4 allenamenti)
+        if (historySpan && card && !card.classList.contains('dimmed')) {
+            const exerciseId = historySpan.dataset.exerciseId;
+            
+            const exerciseDef = routine.esercizi.find(e => e.id === exerciseId);
+            if (!exerciseDef) return;
+
+            // Filtra lo storico per questa routine
+            const logsDiQuestaRoutine = storico.filter(log => log.routineId === routineId);
+            
+            const historyData = [];
+            for (const log of logsDiQuestaRoutine) {
+                if (historyData.length >= 20) break;
+                // Trova l'esercizio nel log usando l'ID globale (esercizioId)
+                const logExercise = log.esercizi.find(e => e.esercizioId === exerciseDef.esercizioId);
+                
+                if (logExercise && logExercise.serie) {
+                    logExercise.serie.forEach((s, index) => {
+                        if (historyData.length >= 20) return;
+                        if (s.completed) {
+                            historyData.push({
+                                date: new Date(log.data),
+                                kg: s.kg,
+                                reps: s.reps,
+                                setIndex: index + 1
+                            });
+                        }
+                    });
+                }
+            }
+            showHistoryModal(exerciseDef.nome, historyData);
+            return;
+        }
+
         // 4. Handle click on the card itself for Focus Mode
         if (card) {
             updateExerciseFocus(card);
@@ -439,9 +493,6 @@ window.setupAllenamentoPage = function() {
 
     // --- Funzione Notifica Silenziosa (Background Monitor) ---
     function updateSilentNotification() {
-        // Aggiorna solo se la pagina è nascosta (background) per risparmiare risorse
-        if (document.visibilityState === 'visible') return;
-        
         if (!('Notification' in window) || Notification.permission !== 'granted') return;
 
         // 1. Trova il prossimo set da fare
@@ -464,29 +515,102 @@ window.setupAllenamentoPage = function() {
             }
         }
 
-        // 2. Determina il titolo (Recupero o Allenamento)
-        let title = `In Corso: ${routine.nome}`;
+        // 2. Determina il contenuto (Titolo fisso "GymBook", info nel body)
+        const title = 'GymBook';
+        let statusInfo = `🏋️ ${routine.nome}`;
+
         const recoveryEndTime = getFromLocalStorage('recoveryEndTime');
         if (recoveryEndTime && recoveryEndTime > Date.now()) {
             const remaining = Math.ceil((recoveryEndTime - Date.now()) / 1000);
             const min = Math.floor(remaining / 60);
             const sec = String(remaining % 60).padStart(2, '0');
-            title = `Recupero: ${min}:${sec}`;
+            statusInfo = `⏸️ Recupero: ${min}:${sec}`;
+        } else if (recoveryEndTime && recoveryEndTime <= Date.now()) {
+            // Recupero finito ma non ancora resettato (l'utente non ha ancora fatto nulla)
+            statusInfo = `🔔 RECUPERO TERMINATO!`;
         }
+
+        let body = found ? `${statusInfo} • Prossimo: ${nextSetInfo}` : `${statusInfo} • ${nextSetInfo}`;
 
         // 3. Invia/Aggiorna notifica tramite Service Worker
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.ready.then(registration => {
                 registration.showNotification(title, {
-                    body: found ? `Prossimo: ${nextSetInfo}` : nextSetInfo,
-                    icon: 'icon.png',
-                    tag: 'workout-status', // Tag fisso per sovrascrivere la stessa notifica
+                    body: body,
+                    tag: 'gymbook-active-workout', // Tag UNICO per tutta la sessione
                     renotify: false,       // IMPORTANTE: Niente suono/vibrazione all'aggiornamento
                     silent: true,          // Notifica silenziosa
+                    requireInteraction: true, // Tenta di mantenerla persistente
                     data: { url: window.location.href } // Passa l'URL corrente per il click
                 });
             });
         }
+    }
+
+    // Funzione per mostrare il modale dello storico
+    function showHistoryModal(exerciseName, historyData) {
+        let modal = document.getElementById('history-modal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'history-modal';
+            modal.className = 'modal';
+            document.body.appendChild(modal);
+        }
+
+        let content = '';
+        if (historyData.length === 0) {
+            content = '<p style="text-align:center; color: var(--text-dim); padding: 20px;">Nessun dato storico disponibile.</p>';
+        } else {
+            // Raggruppa per data
+            const groups = {};
+            const uniqueDates = [];
+            
+            historyData.forEach(h => {
+                const dateStr = h.date.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: '2-digit' });
+                if (!groups[dateStr]) {
+                    groups[dateStr] = [];
+                    uniqueDates.push(dateStr);
+                }
+                groups[dateStr].push(h);
+            });
+
+            content = uniqueDates.map(dateStr => {
+                const setsHtml = groups[dateStr].map(h => `
+                    <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border-light);">
+                        <span style="color: var(--text-dim); font-size: 12px; border: 1px solid var(--border-light); padding: 2px 6px; border-radius: 4px;">Set ${h.setIndex}</span>
+                        <span style="font-weight: bold; color: var(--text);">${h.kg}kg x ${h.reps}</span>
+                    </div>
+                `).join('');
+
+                return `
+                    <div style="margin-bottom: 15px;">
+                        <div style="padding: 5px 0; border-bottom: 1px solid var(--border-light); margin-bottom: 5px; font-weight: bold; color: var(--accent); font-size: 14px;">
+                            ${dateStr}
+                        </div>
+                        <div style="padding-left: 5px;">
+                            ${setsHtml}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom: 1px solid var(--border-light); padding-bottom: 10px;">
+                    <h3 style="margin:0; font-size: 18px;">Storico Esercizio</h3>
+                    <span class="close-modal" style="cursor:pointer; font-size: 24px;">&times;</span>
+                </div>
+                <p style="margin:0 0 10px 0; color:var(--accent); font-size:14px; font-weight:bold;">${exerciseName}</p>
+                <div style="max-height: 400px; overflow-y: auto;">${content}</div>
+            </div>
+        `;
+
+        modal.style.display = 'flex';
+        
+        const closeBtn = modal.querySelector('.close-modal');
+        closeBtn.onclick = () => modal.style.display = 'none';
+        modal.onclick = (e) => { if (e.target == modal) modal.style.display = 'none'; };
     }
 
     // Timer Functions
@@ -503,12 +627,13 @@ window.setupAllenamentoPage = function() {
             return;
         }
 
+        enableBackgroundMode(); // Assicura che l'audio sia attivo se ricarichiamo la pagina
         saveToLocalStorage('activeWorkout', { pianoId, routineId });
         const updateTimer = () => {
             const totalSeconds = Math.floor((Date.now() - startTime) / 1000);
             workoutTimerEl.textContent = `${String(Math.floor(totalSeconds / 3600)).padStart(2, '0')}:${String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0')}`;
             
-            // Aggiorna la notifica di background ogni secondo (se l'app è nascosta)
+            // Aggiorna la notifica persistente ogni secondo
             updateSilentNotification();
         };
         updateTimer();
@@ -560,21 +685,12 @@ window.setupAllenamentoPage = function() {
         saveToLocalStorage('activeWorkoutState', currentState);
     }
 
-    // Gestione Click Pulsante AVVIA / FINE
-    btnEndWorkout.addEventListener('click', () => {
-        if (isPreviewMode) return;
-
-        // Se l'allenamento non è avviato, avvialo
-        if (!getFromLocalStorage('workoutStartTime')) {
-            saveToLocalStorage('workoutStartTime', Date.now());
-            saveToLocalStorage('activeWorkout', { pianoId, routineId });
-            startWorkoutTimer();
-            updateWorkoutButton();
-            return;
-        }
-
+    // Funzione helper per terminare l'allenamento
+    function finishWorkout(saveData) {
         if (wakeLock) wakeLock.release();
         clearInterval(workoutInterval);
+        disableBackgroundMode(); // Ferma l'audio silenzioso
+        
         // Pulisce lo stato dell'allenamento attivo
         localStorage.removeItem('activeWorkout');
         localStorage.removeItem('workoutStartTime');
@@ -585,81 +701,150 @@ window.setupAllenamentoPage = function() {
         // Rimuovi la notifica persistente
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.ready.then(registration => {
-                registration.getNotifications({tag: 'workout-status'}).then(notifications => {
+                registration.getNotifications({tag: 'gymbook-active-workout'}).then(notifications => {
                     notifications.forEach(n => n.close());
                 });
             });
         }
 
-        const workoutLog = {
-            id: Date.now().toString(),
-            data: new Date().toISOString(),
-            durata: workoutTimerEl.textContent,
-            pianoId, routineId, routineNome: routine.nome, esercizi: []
-        };
+        if (saveData) {
+            const workoutLog = {
+                id: Date.now().toString(),
+                data: new Date().toISOString(),
+                durata: workoutTimerEl.textContent,
+                pianoId, routineId, routineNome: routine.nome, esercizi: []
+            };
 
-        // 1. Popola workoutLog per lo STORICO (tutte le serie per mantenere allineamento)
-        container.querySelectorAll('.esercizio-card').forEach(card => {
-            const seriePerStorico = [];
-            card.querySelectorAll('.set-row').forEach(riga => {
-                const inputs = riga.querySelectorAll('input[type="number"]');
-                const isChecked = riga.querySelector('.btn-check-set').dataset.completed === 'true';
-                seriePerStorico.push({ 
-                    kg: inputs[0].value || 0, 
-                    reps: inputs[1].value || 0,
-                    completed: isChecked
+            // 1. Popola workoutLog per lo STORICO (tutte le serie per mantenere allineamento)
+            container.querySelectorAll('.esercizio-card').forEach(card => {
+                const seriePerStorico = [];
+                card.querySelectorAll('.set-row').forEach(riga => {
+                    const inputs = riga.querySelectorAll('input[type="number"]');
+                    const isChecked = riga.querySelector('.btn-check-set').dataset.completed === 'true';
+                    seriePerStorico.push({ 
+                        kg: inputs[0].value || 0, 
+                        reps: inputs[1].value || 0,
+                        completed: isChecked
+                    });
+                });
+                workoutLog.esercizi.push({
+                    esercizioId: routine.esercizi.find(e => e.id === card.dataset.esercizioId).esercizioId,
+                    instanceId: card.dataset.esercizioId,
+                    nome: routine.esercizi.find(e => e.id === card.dataset.esercizioId).nome,
+                    serie: seriePerStorico,
+                    note: card.querySelector('textarea').value
                 });
             });
-            workoutLog.esercizi.push({
-                esercizioId: routine.esercizi.find(e => e.id === card.dataset.esercizioId).esercizioId,
-                instanceId: card.dataset.esercizioId,
-                nome: routine.esercizi.find(e => e.id === card.dataset.esercizioId).nome,
-                serie: seriePerStorico,
-                note: card.querySelector('textarea').value
-            });
-        });
 
-        // 2. Salva lo storico
-        let storicoCompleto = getFromLocalStorage('storicoAllenamenti') || [];
-        storicoCompleto.unshift(workoutLog);
-        saveToLocalStorage('storicoAllenamenti', storicoCompleto);
+            // 2. Salva lo storico
+            let storicoCompleto = getFromLocalStorage('storicoAllenamenti') || [];
+            storicoCompleto.unshift(workoutLog);
+            saveToLocalStorage('storicoAllenamenti', storicoCompleto);
 
-        // 3. Aggiorna la routine (se richiesto) o solo le note
-        let pianiDaAggiornare = getFromLocalStorage('pianiDiAllenamento');
-        const routineDaAggiornare = pianiDaAggiornare.find(p => p.id === pianoId).routine.find(r => r.id === routineId);
-        if (routineDaAggiornare) {
-            container.querySelectorAll('.esercizio-card').forEach(card => {
-                const esercizioTarget = routineDaAggiornare.esercizi.find(e => e.id === card.dataset.esercizioId);
-                if (esercizioTarget) {
-                    // Aggiorna sempre le note e il recupero
-                    esercizioTarget.note = card.querySelector('textarea').value;
-                    esercizioTarget.recupero = card.querySelector('.recovery-input').value;
+            // 3. Aggiorna la routine (se richiesto) o solo le note
+            let pianiDaAggiornare = getFromLocalStorage('pianiDiAllenamento');
+            const routineDaAggiornare = pianiDaAggiornare.find(p => p.id === pianoId).routine.find(r => r.id === routineId);
+            if (routineDaAggiornare) {
+                container.querySelectorAll('.esercizio-card').forEach(card => {
+                    const esercizioTarget = routineDaAggiornare.esercizi.find(e => e.id === card.dataset.esercizioId);
+                    if (esercizioTarget) {
+                        // Aggiorna sempre le note e il recupero
+                        esercizioTarget.note = card.querySelector('textarea').value;
+                        esercizioTarget.recupero = card.querySelector('.recovery-input').value;
 
-                    // Se "Aggiorna routine" è spuntato, aggiorna i valori delle serie
-                    if (updateRoutineToggle.dataset.checked === 'true') {
-                        const nuoveSerie = [];
-                        card.querySelectorAll('.set-row').forEach((riga, index) => {
-                            const inputs = riga.querySelectorAll('input[type="number"]');
-                            const kg = inputs[0].value || 0;
-                            const reps = inputs[1].value || 0;
-                            
-                            // Se la serie è stata completata, usa i nuovi valori
-                            if (riga.querySelector('.btn-check-set').dataset.completed === 'true') {
-                                nuoveSerie.push({ kg, reps });
-                            } else {
-                                // Altrimenti, mantieni i vecchi valori dalla routine originale
-                                if (esercizioTarget.serie[index]) {
-                                    nuoveSerie.push(esercizioTarget.serie[index]);
+                        // Se "Aggiorna routine" è spuntato, aggiorna i valori delle serie
+                        if (updateRoutineToggle.dataset.checked === 'true') {
+                            const nuoveSerie = [];
+                            card.querySelectorAll('.set-row').forEach((riga, index) => {
+                                const inputs = riga.querySelectorAll('input[type="number"]');
+                                const kg = inputs[0].value || 0;
+                                const reps = inputs[1].value || 0;
+                                
+                                // Se la serie è stata completata, usa i nuovi valori
+                                if (riga.querySelector('.btn-check-set').dataset.completed === 'true') {
+                                    nuoveSerie.push({ kg, reps });
+                                } else {
+                                    // Altrimenti, mantieni i vecchi valori dalla routine originale
+                                    if (esercizioTarget.serie[index]) {
+                                        nuoveSerie.push(esercizioTarget.serie[index]);
+                                    }
                                 }
-                            }
-                        });
-                        esercizioTarget.serie = nuoveSerie;
+                            });
+                            esercizioTarget.serie = nuoveSerie;
+                        }
                     }
-                }
-            });
-            saveToLocalStorage('pianiDiAllenamento', pianiDaAggiornare);
+                });
+                saveToLocalStorage('pianiDiAllenamento', pianiDaAggiornare);
+            }
         }
         window.location.replace('index.html');
+    }
+
+    // Gestione Click Pulsante AVVIA / FINE
+    btnEndWorkout.addEventListener('click', () => {
+        if (isPreviewMode) return;
+
+        // Se l'allenamento non è avviato, avvialo
+        if (!getFromLocalStorage('workoutStartTime')) {
+            saveToLocalStorage('workoutStartTime', Date.now());
+            saveToLocalStorage('activeWorkout', { pianoId, routineId });
+            enableBackgroundMode(); // Attiva il background mode al click
+            startWorkoutTimer();
+            updateWorkoutButton();
+            return;
+        }
+
+        // Mostra modale di conferma (Crea dinamicamente se manca per evitare popup di sistema)
+        let modal = document.getElementById('end-workout-modal');
+        
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'end-workout-modal';
+            modal.className = 'modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <h3 style="margin-top: 0;">Allenamento Terminato</h3>
+                    <p>Vuoi salvare i progressi nel diario?</p>
+                    <div class="modal-actions" style="flex-direction: column; gap: 10px;">
+                        <button id="btn-end-save" class="btn-primary">Salva e Termina</button>
+                        <button id="btn-end-discard" class="btn-elimina" style="width: 100%;">Non Salvare</button>
+                        <button id="btn-end-cancel" class="btn-grigio" style="width: 100%;">Annulla</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        modal.style.display = 'flex';
+        
+        const btnSave = modal.querySelector('#btn-end-save');
+        const btnDiscard = modal.querySelector('#btn-end-discard');
+        const btnCancel = modal.querySelector('#btn-end-cancel');
+
+        // Clona per rimuovere vecchi listener
+        const newBtnSave = btnSave.cloneNode(true);
+        const newBtnDiscard = btnDiscard.cloneNode(true);
+        const newBtnCancel = btnCancel.cloneNode(true);
+        
+        btnSave.parentNode.replaceChild(newBtnSave, btnSave);
+        btnDiscard.parentNode.replaceChild(newBtnDiscard, btnDiscard);
+        btnCancel.parentNode.replaceChild(newBtnCancel, btnCancel);
+
+        newBtnSave.addEventListener('click', () => {
+            modal.style.display = 'none';
+            finishWorkout(true);
+        });
+
+        newBtnDiscard.addEventListener('click', () => {
+            modal.style.display = 'none';
+            finishWorkout(false);
+        });
+
+        newBtnCancel.addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
+        
+        modal.onclick = (e) => { if (e.target == modal) modal.style.display = 'none'; };
     });
 
     startWorkoutTimer();

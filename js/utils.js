@@ -50,40 +50,9 @@ function playNotificationSound() {
         console.error("Errore nella riproduzione dell'audio:", error);
     });
 
-    // Invia anche una notifica di sistema se possibile
-    if ('Notification' in window && Notification.permission === 'granted') {
-        // Invia notifica solo se la pagina è nascosta o se l'utente lo desidera sempre
-        if (document.visibilityState === 'hidden') {
-            try {
-                // Registrazione SW necessaria per notifiche su Android PWA in alcuni casi, 
-                // ma new Notification funziona spesso anche direttamente.
-                navigator.serviceWorker.ready.then(registration => {
-                    // Calcola l'URL dell'allenamento attivo per il redirect
-                    const activeWorkout = getFromLocalStorage('activeWorkout');
-                    const targetUrl = activeWorkout 
-                        ? `allenamento.html?pianoId=${activeWorkout.pianoId}&routineId=${activeWorkout.routineId}` 
-                        : 'index.html';
-
-                    registration.showNotification('Recupero Terminato!', {
-                        body: 'È ora di tornare ad allenarsi!',
-                        icon: 'icon.png',
-                        vibrate: [200, 100, 200],
-                        tag: 'recovery-timer',
-                        data: { url: targetUrl } // Passa l'URL per il click
-                    });
-                }).catch(() => {
-                    // Fallback standard
-                    new Notification("Recupero Terminato!", {
-                        body: "È ora di tornare ad allenarsi!",
-                        icon: "icon.png",
-                        vibrate: [200, 100, 200]
-                    });
-                });
-            } catch (e) {
-                console.log("Errore invio notifica:", e);
-            }
-        }
-    }
+    // NOTA: La notifica visiva è ora gestita interamente da updateSilentNotification in workout.js
+    // per evitare duplicati e mantenere una singola notifica persistente.
+    // Qui gestiamo solo l'audio.
 }
 
 // --- Funzione Modale di Conferma Personalizzato ---

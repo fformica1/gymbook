@@ -110,6 +110,11 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function manageNativeBackButton(currentPage) {
+    // Sulla Home NON intercettiamo il tasto indietro.
+    // Lasciamo che il browser gestisca l'azione (chiusura app o ritorno alla pagina precedente),
+    // evitando il loop infinito causato dal pushState continuo.
+    if (currentPage === 'home') return;
+
     // Inseriamo uno stato fittizio nella history per intercettare il "back"
     // Usiamo un oggetto state per identificare che è uno stato gestito da noi
     const state = { page: currentPage, gymbook: true };

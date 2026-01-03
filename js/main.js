@@ -110,17 +110,18 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function manageNativeBackButton(currentPage) {
-    // Intercettiamo il tasto indietro anche sulla Home per disabilitarlo completamente.
-    // In questo modo l'app non tornerà indietro nella cronologia del browser ma resterà fissa.
+    // Intercettiamo il tasto indietro su TUTTE le pagine.
+    // Sulla Home, questo serve a disabilitarlo completamente (trap).
 
-    // Inseriamo uno stato fittizio nella history per intercettare il "back"
-    // Usiamo un oggetto state per identificare che è uno stato gestito da noi
     const state = { page: currentPage, gymbook: true };
     
     // Imposta il ripristino dello scroll manuale per evitare salti
     if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 
-    // Spingiamo lo stato per creare il "cuscinetto" di navigazione
+    // Tecnica rinforzata:
+    // 1. Definiamo lo stato corrente con replaceState
+    history.replaceState(state, '', location.href);
+    // 2. Aggiungiamo SUBITO un nuovo stato identico (il "trap")
     history.pushState(state, '', location.href);
 
     window.addEventListener('popstate', (event) => {
@@ -137,8 +138,9 @@ function manageNativeBackButton(currentPage) {
         // Logica ad albero: definisce il "Genitore" di ogni pagina
         switch (currentPage) {
             case 'home':
-                // Rimaniamo sulla home. Il pushState all'inizio del listener ha già annullato l'azione.
-                return; 
+                // Nessuna azione: il pushState sopra ci mantiene qui.
+                // Il tasto indietro è effettivamente disabilitato.
+                break;
             case 'piani':
                 window.location.replace('index.html');
                 break;

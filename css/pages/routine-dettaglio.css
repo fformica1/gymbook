@@ -320,17 +320,21 @@ input.set-input {
     flex: 1;
     display: flex;
     justify-content: center;
+    align-items: center;
     gap: 10px;
 }
 
 .btn-quick-adjust {
-    width: 32px;
-    height: 32px;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1 / 1;
+    max-width: 48px;
+    flex-grow: 1;
     border-radius: 50%;
     border: 1px solid var(--border-light);
     background-color: var(--card-bg);
     color: var(--text);
-    font-size: 18px;
+    font-size: 20px;
     display: flex;
     align-items: center;
     justify-content: center;

@@ -85,12 +85,39 @@ window.setupAllenamentoPage = function() {
     function enableBackgroundMode() {
         // Avvia l'audio silenzioso solo se non è già in riproduzione
         if (silentAudio.paused) {
-            silentAudio.play().catch(e => console.log("Silent audio play failed (user interaction needed):", e));
+            silentAudio.play().catch(e => {
+                console.log("Silent audio play failed (user interaction needed):", e);
+                // Fallback: Riprova al primo tocco dell'utente se l'autoplay è bloccato
+                const resumeAudio = () => {
+                    silentAudio.play();
+                    document.removeEventListener('click', resumeAudio);
+                    document.removeEventListener('touchstart', resumeAudio);
+                };
+                document.addEventListener('click', resumeAudio);
+                document.addEventListener('touchstart', resumeAudio);
+            });
+        }
+
+        // --- FIX: Media Session API per evitare throttling su Android ---
+        // Segnala al sistema che l'app è un media player attivo, prevenendo il blocco del timer
+        if ('mediaSession' in navigator) {
+            navigator.mediaSession.metadata = new MediaMetadata({
+                title: "Allenamento in Corso",
+                artist: "GymBook",
+                album: "Timer Attivo",
+                artwork: [] // Rimuove qualsiasi immagine/icona dalla notifica media
+            });
+            navigator.mediaSession.playbackState = 'playing';
+            // Handler fittizi necessari per mantenere attiva la sessione
+            navigator.mediaSession.setActionHandler('play', () => silentAudio.play());
+            navigator.mediaSession.setActionHandler('pause', () => {}); 
+            navigator.mediaSession.setActionHandler('stop', () => {});
         }
     }
     function disableBackgroundMode() {
         silentAudio.pause();
         silentAudio.currentTime = 0;
+        if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'none';
     }
 
     // Controllo Modalità Anteprima (se c'è un allenamento attivo ma stiamo visualizzando un'altra routine)

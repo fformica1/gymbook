@@ -80,7 +80,8 @@ window.setupAllenamentoPage = function() {
     
     // FIX: Creiamo l'elemento audio e lo aggiungiamo al DOM per evitare che il browser lo scarti
     let silentAudio = new Audio(silentAudioSrc);
-    silentAudio.style.display = 'none';
+    // Evitiamo display: none perché i browser potrebbero sospendere il media. Lo rendiamo invisibile ma presente.
+    silentAudio.style.cssText = 'position: absolute; width: 1px; height: 1px; opacity: 0.001; z-index: -1; pointer-events: none;';
     document.body.appendChild(silentAudio);
     silentAudio.loop = true;
 

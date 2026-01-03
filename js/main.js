@@ -118,8 +118,13 @@ function manageNativeBackButton(currentPage) {
     // Creiamo la trappola nella history
     // PushState crea una nuova voce. Quando l'utente preme indietro, viene rimosso questo stato
     // e scatta l'evento popstate, dove noi lo reinseriamo subito.
-    if (currentPage === 'home' || history.state === null) {
-         history.pushState(state, '', location.href);
+    if (currentPage === 'home') {
+        // Sulla Home forziamo sempre la creazione del cuscinetto
+        history.replaceState(state, '', location.href);
+        history.pushState(state, '', location.href);
+    } else if (history.state === null) {
+        // Sulle altre pagine lo creiamo solo se manca
+        history.pushState(state, '', location.href);
     }
 
     window.addEventListener('popstate', (event) => {

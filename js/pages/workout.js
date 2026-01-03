@@ -202,7 +202,7 @@ window.setupAllenamentoPage = function() {
             <div class="esercizio-card-header"><h2>${esercizio.nome}</h2></div>
             <div class="exercise-details"><textarea placeholder="Note" rows="1" class="auto-expand" ${isPreviewMode ? 'disabled' : ''}>${workoutState?.esercizi[esercizio.id]?.note || esercizio.note}</textarea></div>
             <div class="recovery-time-display"><span>Tempo di Recupero: <input type="number" class="recovery-input" value="${workoutState?.esercizi[esercizio.id]?.recupero || esercizio.recupero}" inputmode="numeric" ${isPreviewMode ? 'disabled' : ''}> s</span></div>
-            <div class="sets-header"><span class="set-number-header">Set</span><span class="set-previous-header">Precedente</span><div class="set-inputs-header"><span>Kg</span><span>Reps</span></div><span class="set-check-header">✓</span></div>
+            <div class="sets-header"><span class="set-number-header">Set</span><span class="set-previous-header">Prec</span><div class="set-inputs-header"><span>Kg</span><span>Reps</span></div><span class="set-check-header">✓</span></div>
             <div class="sets-container">${serieHtml}</div>
             ${quickAdjustHtml}
         `;
@@ -515,22 +515,22 @@ window.setupAllenamentoPage = function() {
             }
         }
 
-        // 2. Determina il contenuto (Titolo fisso "GymBook", info nel body)
-        const title = 'GymBook';
-        let statusInfo = `🏋️ ${routine.nome}`;
+        // 2. Determina il contenuto (Titolo = Recupero/Stato, Body = Prossimo Set)
+        let title = routine.nome;
+        let bodyPrefix = found ? "Prossimo: " : "";
 
         const recoveryEndTime = getFromLocalStorage('recoveryEndTime');
         if (recoveryEndTime && recoveryEndTime > Date.now()) {
             const remaining = Math.ceil((recoveryEndTime - Date.now()) / 1000);
             const min = Math.floor(remaining / 60);
             const sec = String(remaining % 60).padStart(2, '0');
-            statusInfo = `⏸️ Recupero: ${min}:${sec}`;
+            title = `Recupero: ${min}:${sec}`;
         } else if (recoveryEndTime && recoveryEndTime <= Date.now()) {
             // Recupero finito ma non ancora resettato (l'utente non ha ancora fatto nulla)
-            statusInfo = `🔔 RECUPERO TERMINATO!`;
+            title = `RECUPERO TERMINATO!`;
         }
 
-        let body = found ? `${statusInfo} • Prossimo: ${nextSetInfo}` : `${statusInfo} • ${nextSetInfo}`;
+        let body = `${bodyPrefix}${nextSetInfo}`;
 
         // 3. Invia/Aggiorna notifica tramite Service Worker
         if ('serviceWorker' in navigator) {
@@ -539,8 +539,9 @@ window.setupAllenamentoPage = function() {
                     body: body,
                     tag: 'gymbook-active-workout', // Tag UNICO per tutta la sessione
                     renotify: false,       // IMPORTANTE: Niente suono/vibrazione all'aggiornamento
-                    silent: true,          // Notifica silenziosa
+                    vibrate: [],           // Nessuna vibrazione (rimosso silent: true per visibilità lockscreen)
                     requireInteraction: true, // Tenta di mantenerla persistente
+                    ongoing: true,         // Impedisce la rimozione manuale (Android)
                     data: { url: window.location.href } // Passa l'URL corrente per il click
                 });
             });

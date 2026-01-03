@@ -209,7 +209,7 @@ input[type="number"].recovery-input {
 .set-number-header { flex: 0 0 30px; text-align: center; }
 .set-check-header { flex: 0 0 40px; text-align: center; }
 .set-previous-header { flex: 1; text-align: center; }
-.set-inputs-header { display: flex; flex: 2; justify-content: space-around; }
+.set-inputs-header { display: flex; flex: 2; }
 .set-inputs-header > span { flex: 1; text-align: center; }
 
 .sets-container {
@@ -279,7 +279,6 @@ input[type="number"].recovery-input {
     display: flex;
     align-items: center;
     flex: 2;
-    justify-content: space-around;
 }
 
 .adjust-control {
@@ -397,19 +396,23 @@ body {
 .quick-adjust-controls {
     display: flex;
     flex: 2; /* Corrisponde a .set-inputs */
-    justify-content: space-around;
+    gap: 8px; /* Distanza tra il gruppo Kg e il gruppo Reps */
 }
 
 .quick-adjust-group {
     flex: 1;
     display: flex;
     justify-content: center;
-    gap: 10px;
+    align-items: center;
+    gap: 8px; /* Distanza tra i pulsanti - e + dello stesso gruppo */
 }
 
 .btn-quick-adjust {
-    width: 38px;
-    height: 38px;
+    width: 100%; /* Si adatta alla larghezza disponibile */
+    height: auto;
+    aspect-ratio: 1 / 1; /* Mantiene la forma circolare */
+    max-width: 48px; /* Dimensione massima per evitare pulsanti giganti su desktop */
+    flex-grow: 1;
     border-radius: 50%;
     border: 1px solid var(--border-light);
     background-color: var(--card-bg);

@@ -77,7 +77,11 @@ window.setupAllenamentoPage = function() {
     // --- Silent Audio Hack (Per mantenere attivo il timer in background) ---
     // Un brevissimo file MP3 di silenzio codificato in base64
     const silentAudioSrc = 'data:audio/mpeg;base64,SUQzBAAAAAABAFRYWFgAAAASAAADbWFqb3JfYnJhbmQAbXA0MgBUWFhYAAAAEQAAA21pbm9yX3ZlcnNpb24AMABUWFhYAAAAHAAAA2NvbXBhdGlibGVfYnJhbmRzAGlzb21tcDQyAFRTU0UAAAAPAAADTGF2ZjU3LjU2LjEwMAAAAAAAAAAAAAAA//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq';
+    
+    // FIX: Creiamo l'elemento audio e lo aggiungiamo al DOM per evitare che il browser lo scarti
     let silentAudio = new Audio(silentAudioSrc);
+    silentAudio.style.display = 'none';
+    document.body.appendChild(silentAudio);
     silentAudio.loop = true;
 
     function enableBackgroundMode() {
@@ -115,6 +119,7 @@ window.setupAllenamentoPage = function() {
     function disableBackgroundMode() {
         silentAudio.pause();
         silentAudio.currentTime = 0;
+        // Non rimuoviamo l'elemento dal DOM per poterlo riutilizzare
         if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'none';
     }
 
@@ -143,6 +148,12 @@ window.setupAllenamentoPage = function() {
     // Gestore unico del "battito" del timer
     timerWorker.onmessage = function(e) {
         if (e.data === 'tick') {
+            // FIX: Controllo di sicurezza. Se l'audio si è fermato (es. interruzione sistema), riavvialo.
+            if (silentAudio.paused && getFromLocalStorage('workoutStartTime')) {
+                console.log("Audio background interrotto, tentativo riavvio...");
+                silentAudio.play().catch(() => {});
+            }
+
             // 1. Aggiorna Timer Allenamento
             if (getFromLocalStorage('workoutStartTime')) {
                 updateWorkoutTimerUI();
@@ -698,7 +709,8 @@ window.setupAllenamentoPage = function() {
             if (workoutHeader) workoutHeader.classList.add('timer-finished');
             if (workoutStickyHeader) workoutStickyHeader.classList.add('timer-finished');
         } else {
-            recoveryTimerEl.textContent = `${String(Math.floor(Math.round(remainingMs / 1000) / 60)).padStart(2, '0')}:${String(Math.round(remainingMs / 1000) % 60).padStart(2, '0')}`;
+            const totalSeconds = Math.ceil(remainingMs / 1000);
+            recoveryTimerEl.textContent = `${String(Math.floor(totalSeconds / 60)).padStart(2, '0')}:${String(totalSeconds % 60).padStart(2, '0')}`;
         }
     }
 

@@ -224,7 +224,7 @@ window.setupHomePage = function() {
                     if (recoveryEndTime) {                    
                         const remainingMs = recoveryEndTime - Date.now();
                         if (remainingMs > 0) {
-                            const remainingSeconds = Math.round(remainingMs / 1000);
+                            const remainingSeconds = Math.ceil(remainingMs / 1000);
                             const minutes = String(Math.floor(remainingSeconds / 60)).padStart(2, '0');
                             const seconds = String(remainingSeconds % 60).padStart(2, '0');
                             recoveryDisplay.textContent = `${minutes}:${seconds}`;                        

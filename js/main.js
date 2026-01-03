@@ -115,15 +115,11 @@ function manageNativeBackButton(currentPage) {
     // Imposta il ripristino dello scroll manuale per evitare salti
     if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 
-    // Tecnica rinforzata (Trap Loop):
-    // 1. Definiamo lo stato corrente con replaceState
-    history.replaceState(state, '', location.href);
-    
-    // 2. Creiamo il "cuscinetto" (Trap).
-    // Sulla Home, creiamo un loop di stati per impedire l'uscita o la navigazione a ritroso.
-    const loopCount = currentPage === 'home' ? 20 : 1; 
-    for (let i = 0; i < loopCount; i++) {
-        history.pushState(state, '', location.href);
+    // Creiamo la trappola nella history
+    // PushState crea una nuova voce. Quando l'utente preme indietro, viene rimosso questo stato
+    // e scatta l'evento popstate, dove noi lo reinseriamo subito.
+    if (currentPage === 'home' || history.state === null) {
+         history.pushState(state, '', location.href);
     }
 
     window.addEventListener('popstate', (event) => {
@@ -139,6 +135,10 @@ function manageNativeBackButton(currentPage) {
 
         // Logica ad albero: definisce il "Genitore" di ogni pagina
         switch (currentPage) {
+            case 'home':
+                // Rimaniamo qui. Il pushState all'inizio del listener ha già annullato l'azione di uscita.
+                // Non facciamo nulla, bloccando l'utente sulla Home.
+                break;
             case 'piani':
                 window.location.replace('index.html');
                 break;

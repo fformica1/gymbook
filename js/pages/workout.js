@@ -582,10 +582,12 @@ window.setupAllenamentoPage = function() {
             return;
         }
         
+        // FIX: Salva lo stato PRIMA di avviare il manager per garantire che il worker trovi i dati
+        saveToLocalStorage('activeWorkout', { pianoId, routineId });
+
         // Avvia il manager globale (Audio + Worker)
         if (window.globalWorkoutManager) window.globalWorkoutManager.start();
         
-        saveToLocalStorage('activeWorkout', { pianoId, routineId });
         updateWorkoutTimerUI(); // Aggiornamento immediato
     }
 

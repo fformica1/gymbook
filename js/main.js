@@ -78,6 +78,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Applica il tema salvato all'avvio (funzione in utils.js)
     if (typeof applyTheme === 'function') applyTheme();
 
+    // --- Inizializzazione Gestore Allenamento Globale ---
+    // SPOSTATO QUI (Prima del setup pagine) per garantire che sia pronto all'uso
+    try {
+        initGlobalWorkoutManager();
+    } catch (e) {
+        console.error("Errore initGlobalWorkoutManager:", e);
+    }
+
     // Inizializza la logica specifica per ogni pagina
     // Le funzioni setup... sono definite nei rispettivi file in js/pages/
     switch (currentPage) {
@@ -106,21 +114,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Gestione Tasto Indietro Nativo (Tree Navigation) ---
     manageNativeBackButton(currentPage);
-
-    // --- Inizializzazione Gestore Allenamento Globale ---
-    // Gestisce notifiche e timer in background indipendentemente dalla pagina corrente
-    try {
-        initGlobalWorkoutManager();
-    } catch (e) {
-        console.error("Errore initGlobalWorkoutManager:", e);
-    }
 });
-
-let globalWorkoutManager = null;
 
 function initGlobalWorkoutManager() {
     // Se esiste già, non ricrearlo
-    if (globalWorkoutManager) return;
+    if (window.globalWorkoutManager) return;
 
     // Worker Blob con Timer Auto-Correttivo (Drift Correction)
     // Questo assicura che il timer non perda colpi anche se il browser rallenta l'esecuzione
@@ -152,12 +150,16 @@ function initGlobalWorkoutManager() {
         };
     `], { type: 'text/javascript' });
 
-    globalWorkoutManager = {
+    window.globalWorkoutManager = {
         audioCtx: null,
         oscillator: null,
         worker: new Worker(URL.createObjectURL(timerWorkerBlob)),
         
         start: function() {
+            // Reset variabili notifica per forzare l'aggiornamento immediato
+            lastNotificationTitle = null;
+            lastNotificationBody = null;
+
             // Inizializza Web Audio API (Più robusto dell'elemento <audio> per il background)
             if (!this.audioCtx) {
                 const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -212,7 +214,7 @@ function initGlobalWorkoutManager() {
     };
 
     // Gestione Tick del Worker
-    globalWorkoutManager.worker.onmessage = function(e) {
+    window.globalWorkoutManager.worker.onmessage = function(e) {
         if (e.data === 'tick') {
             // 1. Aggiorna Notifica
             updateGlobalNotification();
@@ -231,7 +233,7 @@ function initGlobalWorkoutManager() {
 
     // Se c'è un allenamento attivo al caricamento della pagina, riavvia il manager
     if (localStorage.getItem('workoutStartTime')) {
-        globalWorkoutManager.start();
+        window.globalWorkoutManager.start();
     }
 }
 

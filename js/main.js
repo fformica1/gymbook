@@ -231,9 +231,6 @@ function initGlobalWorkoutManager() {
     }
 }
 
-let lastNotificationTitle = null;
-let lastNotificationBody = null;
-
 function updateGlobalNotification() {
     if (localStorage.getItem('notificationsEnabled') === 'false') return;
     if (!('Notification' in window) || Notification.permission !== 'granted') return;
@@ -300,11 +297,6 @@ function updateGlobalNotification() {
         }
     }
 
-    // Ottimizzazione: Non aggiornare se il contenuto è identico (evita wake screen)
-    if (title === lastNotificationTitle && body === lastNotificationBody) return;
-    lastNotificationTitle = title;
-    lastNotificationBody = body;
-
     // Invia Notifica
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.ready.then(registration => {
@@ -314,7 +306,6 @@ function updateGlobalNotification() {
                 tag: 'gymbook-active-workout',
                 renotify: false,
                 silent: true,
-                vibrate: [],
                 ongoing: true,
                 data: { url: 'allenamento.html?pianoId=' + activeWorkout.pianoId + '&routineId=' + activeWorkout.routineId }
             });
@@ -335,12 +326,9 @@ function manageNativeBackButton(currentPage) {
     // Premendo indietro, torna allo stato "base" e scatta l'evento 'popstate'.
     const state = { page: currentPage, gymbook: true, timestamp: Date.now() };
     
-    // FIX: Ritardiamo leggermente la manipolazione della history per compatibilità
-    // Questo assicura che il browser registri correttamente lo stato anche su dispositivi più lenti
-    setTimeout(() => {
-        history.replaceState(state, '', location.href);
-        history.pushState(state, '', location.href);
-    }, 10);
+    // Creazione immediata della trappola nella history
+    history.replaceState(state, '', location.href);
+    history.pushState(state, '', location.href);
 
     // 3. Gestione Evento Indietro (popstate)
     window.addEventListener('popstate', (event) => {

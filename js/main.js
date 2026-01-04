@@ -308,6 +308,11 @@ function updateGlobalNotification() {
 
     // Ottimizzazione: Non aggiornare se il contenuto è identico (evita wake screen)
     if (title === lastNotificationTitle && body === lastNotificationBody) return;
+    
+    // Se lastNotificationTitle è null, significa che è la prima notifica della sessione.
+    // In questo caso forziamo renotify: true per assicurarci che appaia visibilmente.
+    const shouldRenotify = (lastNotificationTitle === null);
+
     lastNotificationTitle = title;
     lastNotificationBody = body;
 
@@ -318,9 +323,8 @@ function updateGlobalNotification() {
                 body: body,
                 icon: 'icon-browser.png',
                 tag: 'gymbook-active-workout',
-                renotify: false,
+                renotify: shouldRenotify, // True solo all'avvio, False per gli aggiornamenti
                 silent: true,
-                vibrate: [],
                 ongoing: true,
                 data: { url: 'allenamento.html?pianoId=' + activeWorkout.pianoId + '&routineId=' + activeWorkout.routineId }
             });

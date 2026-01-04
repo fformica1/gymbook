@@ -31,7 +31,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.addEventListener('click', (e) => {
         // Richiedi permesso notifiche al primo click utile nell'app
         if (typeof requestNotificationPermission === 'function') {
-            requestNotificationPermission();
+            if (localStorage.getItem('notificationsEnabled') !== 'false') {
+                requestNotificationPermission();
+            }
         }
 
         const link = e.target.closest('a');

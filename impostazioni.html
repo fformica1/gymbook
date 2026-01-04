@@ -7,8 +7,8 @@
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" href="icon-browser.png">
     <link rel="apple-touch-icon" href="icon.png">
-    <link rel="stylesheet" href="css/global.css?v=1.14">
-    <link rel="stylesheet" href="css/components.css?v=1.14">
+    <link rel="stylesheet" href="css/global.css?v=1.15">
+    <link rel="stylesheet" href="css/components.css?v=1.15">
 </head>
 <body>
     <header class="app-header">
@@ -43,6 +43,15 @@
                     </select>
                 </div>
             </div>
+            <div class="list-item-container" style="display: block;">
+                <div class="setting-row" style="display: flex; flex-direction: row; flex-wrap: nowrap; justify-content: space-between; align-items: center;">
+                    <label for="notifications-toggle" style="margin: 0; font-size: 18px; white-space: nowrap;">Notifiche Allenamento</label>
+                    <label class="switch">
+                        <input type="checkbox" id="notifications-toggle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
 
             <div class="list-item-container" style="display: block; margin-top: 20px;">
                 <button id="btn-update-app" style="width: 100%; padding: 15px; background-color: var(--card-bg); border: 1px solid var(--accent); color: var(--accent); border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer;">
@@ -64,7 +73,7 @@
         </section>
 
         <section style="margin-top: 20px; text-align: center; color: var(--text-dim);">
-        <p>GymBook v1.14</p>
+        <p>GymBook v1.15</p>
         </section>
     </div>
 
@@ -82,9 +91,9 @@
 
     <!-- La navbar non serve nella pagina impostazioni -->
 
-    <script src="js/utils.js?v=1.14"></script>
-    <script src="js/pages/settings.js?v=1.14"></script>
-    <script src="js/main.js?v=1.14"></script>
+    <script src="js/utils.js?v=1.15"></script>
+    <script src="js/pages/settings.js?v=1.15"></script>
+    <script src="js/main.js?v=1.15"></script>
     <script>
         // Script inline per gestire il salvataggio dell'incremento peso
         document.addEventListener('DOMContentLoaded', () => {
@@ -92,6 +101,19 @@
             if (weightSelect) {
                 weightSelect.value = localStorage.getItem('weightIncrement') || '2.5';
                 weightSelect.addEventListener('change', (e) => localStorage.setItem('weightIncrement', e.target.value));
+            }
+
+            // Gestione Toggle Notifiche
+            const notificationsToggle = document.getElementById('notifications-toggle');
+            if (notificationsToggle) {
+                // Default true se non impostato
+                notificationsToggle.checked = localStorage.getItem('notificationsEnabled') !== 'false';
+                notificationsToggle.addEventListener('change', (e) => {
+                    localStorage.setItem('notificationsEnabled', e.target.checked);
+                    if (e.target.checked && 'Notification' in window && Notification.permission !== 'granted') {
+                        Notification.requestPermission();
+                    }
+                });
             }
 
             // Gestione Reset App

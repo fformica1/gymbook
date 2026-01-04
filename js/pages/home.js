@@ -87,7 +87,33 @@ window.setupHomePage = function() {
             if (activePiano.routine.length > 0) {
                 const storico = getFromLocalStorage('storicoAllenamenti') || [];
 
-                activePiano.routine.forEach(r => {
+                // Palette di colori accesi e ben distinguibili
+                const routineColors = [
+                    '#FF3B30', // Rosso
+                    '#FF9500', // Arancione
+                    '#FFCC00', // Giallo
+                    '#34C759', // Verde
+                    '#5AC8FA', // Azzurro
+                    '#007AFF', // Blu
+                    '#5856D6', // Indaco
+                    '#AF52DE', // Viola
+                    '#ff65a5ff'  // Rosa
+                ];
+
+                // Assegna e salva i colori se mancano (per coerenza futura nel calendario)
+                let colorsUpdated = false;
+                activePiano.routine.forEach((r, index) => {
+                    if (!r.color) {
+                        r.color = routineColors[index % routineColors.length];
+                        colorsUpdated = true;
+                    }
+                });
+
+                if (colorsUpdated) {
+                    saveToLocalStorage('pianiDiAllenamento', piani);
+                }
+
+                activePiano.routine.forEach((r, index) => {
                     const ultimoAllenamento = storico.find(log => log.routineId === r.id);
                     let testoUltimoAllenamento = '';
 
@@ -105,14 +131,13 @@ window.setupHomePage = function() {
                         else testoUltimoAllenamento = `${diffDays} gg fa`;
                     }
 
+                    const color = r.color; // Usa il colore salvato
+
                     const routineDiv = document.createElement('div');
-                    routineDiv.setAttribute('draggable', 'true');
                     routineDiv.dataset.routineId = r.id;
                     routineDiv.className = 'list-item-container';
                     routineDiv.innerHTML = `
-                        <span class="drag-handle">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>
-                        </span>
+                        <span class="routine-dot" style="width: 18px; height: 18px; background-color: ${color}; border-radius: 50%; display: inline-block; margin-right: 15px; flex-shrink: 0;"></span>
                         <a href="allenamento.html?pianoId=${activePiano.id}&routineId=${r.id}" class="title-link">
                             <h3>${r.nome}</h3></a>
                         <span class="last-workout-date">${testoUltimoAllenamento}</span>
@@ -128,60 +153,6 @@ window.setupHomePage = function() {
             routineListHomeEl.innerHTML = '<p>Crea un piano di allenamento per iniziare.</p>';
         }
 
-        // Drag and Drop Logic
-        let draggedItem = null;
-        routineListHomeEl.addEventListener('mousedown', startDrag);
-        routineListHomeEl.addEventListener('touchstart', startDrag, { passive: false });
-
-        function startDrag(e) {
-            const handle = e.target.closest('.drag-handle');
-            if (!handle) return;
-            e.preventDefault();
-            draggedItem = e.target.closest('.list-item-container');
-            if (!draggedItem) return;
-            setTimeout(() => draggedItem.classList.add('dragging'), 0);
-            document.addEventListener('mousemove', onDrag);
-            document.addEventListener('touchmove', onDrag, { passive: false });
-            document.addEventListener('mouseup', endDrag);
-            document.addEventListener('touchend', endDrag);
-        }
-
-        function onDrag(e) {
-            if (!draggedItem) return;
-            e.preventDefault();
-            const y = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
-            const afterElement = getDragAfterElement(routineListHomeEl, y);
-            if (afterElement == null) routineListHomeEl.appendChild(draggedItem);
-            else routineListHomeEl.insertBefore(draggedItem, afterElement);
-        }
-
-        function endDrag() {
-            if (!draggedItem) return;
-            draggedItem.classList.remove('dragging');
-            const newRoutineOrderIds = Array.from(routineListHomeEl.querySelectorAll('.list-item-container')).map(el => el.dataset.routineId);
-            const piani = getFromLocalStorage('pianiDiAllenamento') || [];
-            const pianoDaAggiornare = piani.find(p => p.id === activePianoId);
-            if (pianoDaAggiornare) {
-                pianoDaAggiornare.routine.sort((a, b) => newRoutineOrderIds.indexOf(a.id) - newRoutineOrderIds.indexOf(b.id));
-                saveToLocalStorage('pianiDiAllenamento', piani);
-            }
-            draggedItem = null;
-            document.removeEventListener('mousemove', onDrag);
-            document.removeEventListener('touchmove', onDrag);
-            document.removeEventListener('mouseup', endDrag);
-            document.removeEventListener('touchend', endDrag);
-        }
-
-        function getDragAfterElement(container, y) {
-            const draggableElements = [...container.querySelectorAll('.list-item-container:not(.dragging)')];
-            return draggableElements.reduce((closest, child) => {
-                const box = child.getBoundingClientRect();
-                const offset = y - box.top - box.height / 2;
-                if (offset < 0 && offset > closest.offset) return { offset: offset, element: child };
-                else return closest;
-            }, { offset: Number.NEGATIVE_INFINITY }).element;
-        }
-
         // Banner Allenamento Attivo
         const activeWorkout = getFromLocalStorage('activeWorkout');
 
@@ -193,13 +164,54 @@ window.setupHomePage = function() {
 
             if (routine) {
                 workoutBanner.style.display = 'block';
-                // Ora che il banner è visibile, ne calcoliamo l'altezza
-                const bannerHeight = workoutBanner.offsetHeight;
-                const navHeight = document.querySelector('.bottom-nav')?.offsetHeight || 90; // 90 è un fallback sicuro
-                // Impostiamo il padding del body per evitare che l'ultimo elemento della lista sia nascosto
-                document.body.style.paddingBottom = `${bannerHeight + navHeight}px`;
                 workoutBanner.querySelector('.routine-title').textContent = routine.nome;
                 animateTitleIfLong(workoutBanner.querySelector('.routine-title'));
+                
+                // --- Calcolo Prossimo Set ---
+                const workoutState = getFromLocalStorage('activeWorkoutState');
+                let nextSetText = "Inizio Allenamento";
+                let foundNext = false;
+
+                if (routine.esercizi && routine.esercizi.length > 0) {
+                    for (const ex of routine.esercizi) {
+                        if (foundNext) break;
+                        
+                        // Controlla se esiste uno stato salvato per questo esercizio
+                        const exState = workoutState?.esercizi?.[ex.id];
+                        
+                        if (exState && exState.serie) {
+                            // Cerca la prima serie non completata nello stato
+                            const firstIncompleteIndex = exState.serie.findIndex(s => !s.completed);
+                            if (firstIncompleteIndex !== -1) {
+                                const s = exState.serie[firstIncompleteIndex];
+                                nextSetText = `→ ${ex.nome}: ${s.kg}kg x ${s.reps}`;
+                                foundNext = true;
+                            }
+                        } else {
+                            // Se non c'è stato (es. inizio allenamento), prendi la prima serie della definizione
+                            if (ex.serie && ex.serie.length > 0) {
+                                const s = ex.serie[0];
+                                nextSetText = `→ ${ex.nome}: ${s.kg}kg x ${s.reps}`;
+                                foundNext = true;
+                            }
+                        }
+                    }
+                    
+                    if (!foundNext && workoutState) {
+                        nextSetText = "Allenamento Completato";
+                    }
+                }
+
+                const nextSetEl = workoutBanner.querySelector('.next-set-info');
+                if (nextSetEl) nextSetEl.textContent = nextSetText;
+                // ---------------------------
+
+                // Calcoliamo l'altezza e il padding DOPO aver aggiornato il contenuto per precisione
+                const bannerHeight = workoutBanner.offsetHeight;
+                const navHeight = document.querySelector('.bottom-nav')?.offsetHeight || 90;
+                // Aggiungiamo un buffer di 20px per estetica
+                document.body.style.paddingBottom = `${bannerHeight + navHeight + 20}px`;
+
                 const bannerTimerEl = workoutBanner.querySelector('.workout-timer');
 
                 // Avvia il timer nel banner

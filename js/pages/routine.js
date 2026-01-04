@@ -24,6 +24,7 @@ function setupRoutineList(pianoId) {
     const formCreaRoutine = document.getElementById('routine-form-crea-modal');
 
     renderRoutines();
+    initRoutineDragAndDrop();
 
     // Modal Logic
     if (btnOpenModal && modal) {
@@ -58,7 +59,11 @@ function setupRoutineList(pianoId) {
                 let piani = getFromLocalStorage('pianiDiAllenamento') || [];
                 const pianoCorrente = piani.find(p => p.id === pianoId);
                 if (pianoCorrente) {
-                    pianoCorrente.routine.push({ id: Date.now().toString(), nome: nomeRoutine, esercizi: [] });
+                    // Assegna un colore fisso alla creazione per il futuro calendario
+                    const routineColors = ['#FF3B30', '#FF9500', '#FFCC00', '#34C759', '#5AC8FA', '#007AFF', '#5856D6', '#AF52DE', '#ff65a5ff'];
+                    const color = routineColors[pianoCorrente.routine.length % routineColors.length];
+                    
+                    pianoCorrente.routine.push({ id: Date.now().toString(), nome: nomeRoutine, esercizi: [], color: color });
                     saveToLocalStorage('pianiDiAllenamento', piani);
                     nomeRoutineInput.value = '';
                     if (modal) modal.style.display = "none";
@@ -81,12 +86,14 @@ function setupRoutineList(pianoId) {
         piano.routine.forEach(r => {
             const routineDiv = document.createElement('div');
             routineDiv.className = 'list-item-container';
+            routineDiv.dataset.id = r.id;
 
             const exerciseNames = r.esercizi && r.esercizi.length > 0
                 ? r.esercizi.map(e => e.nome).join(', ')
                 : 'Nessun esercizio';
 
             routineDiv.innerHTML = `
+                <span class="drag-handle"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg></span>
                 <a href="routine-dettaglio.html?pianoId=${pianoId}&routineId=${r.id}" class="title-link">
                     <h3>${r.nome}</h3>
                     <span class="routine-list-preview">${exerciseNames}</span>
@@ -135,6 +142,141 @@ function setupRoutineList(pianoId) {
                 });
             });
         });
+    }
+
+    function initRoutineDragAndDrop() {
+        const list = listaRoutine;
+        let draggingItem = null;
+        let placeholder = null;
+        let isDragging = false;
+        let currentClientY = 0;
+        let dragOffsetY = 0;
+        const scrollThreshold = 100;
+        const maxScrollSpeed = 20;
+
+        const updateOrder = (clientY) => {
+            if (!placeholder) return;
+            const siblings = [...list.querySelectorAll('.list-item-container:not(.dragging)')];
+            const nextSibling = siblings.find(sibling => {
+                const box = sibling.getBoundingClientRect();
+                return clientY <= box.top + box.height / 2;
+            });
+            list.insertBefore(placeholder, nextSibling || null);
+        };
+
+        const autoScroll = () => {
+            if (!isDragging) return;
+            const viewportHeight = window.innerHeight;
+            let scrollAmount = 0;
+            if (currentClientY < scrollThreshold) {
+                scrollAmount = -maxScrollSpeed * ((scrollThreshold - currentClientY) / scrollThreshold);
+            } else if (currentClientY > viewportHeight - scrollThreshold) {
+                scrollAmount = maxScrollSpeed * ((currentClientY - (viewportHeight - scrollThreshold)) / scrollThreshold);
+            }
+            if (scrollAmount !== 0) {
+                document.body.scrollBy(0, scrollAmount);
+                if (draggingItem) draggingItem.style.top = `${currentClientY - dragOffsetY}px`;
+                updateOrder(currentClientY);
+            }
+            requestAnimationFrame(autoScroll);
+        };
+
+        const cleanup = () => {
+            isDragging = false;
+            if (draggingItem) {
+                draggingItem.classList.remove('dragging');
+                draggingItem.style.position = '';
+                draggingItem.style.top = '';
+                draggingItem.style.left = '';
+                draggingItem.style.width = '';
+                draggingItem.style.zIndex = '';
+                draggingItem.style.boxSizing = '';
+                draggingItem = null;
+            }
+            if (placeholder && placeholder.parentNode) placeholder.remove();
+            placeholder = null;
+            list.style.minHeight = '';
+            document.removeEventListener('mousemove', handleMove);
+            document.removeEventListener('touchmove', handleMove);
+            document.removeEventListener('mouseup', handleEnd);
+            document.removeEventListener('touchend', handleEnd);
+            document.removeEventListener('touchcancel', handleEnd);
+        };
+
+        const handleStart = (e) => {
+            if (isDragging) return;
+            const handle = e.target.closest('.drag-handle');
+            if (!handle) return;
+            if (e.type === 'touchstart' && e.cancelable) e.preventDefault();
+            const card = handle.closest('.list-item-container');
+            if (!card) return;
+
+            try {
+                draggingItem = card;
+                isDragging = true;
+                list.style.minHeight = `${list.offsetHeight}px`;
+                const startRect = card.getBoundingClientRect();
+                const touch = e.touches ? e.touches[0] : e;
+                const touchY = touch.clientY;
+                dragOffsetY = touchY - startRect.top;
+                const rect = card.getBoundingClientRect();
+                placeholder = document.createElement('div');
+                placeholder.className = 'sortable-placeholder';
+                placeholder.style.height = `${rect.height}px`;
+                placeholder.style.marginBottom = window.getComputedStyle(card).marginBottom;
+                card.parentNode.insertBefore(placeholder, card);
+                card.style.position = 'fixed';
+                card.style.top = `${touchY - dragOffsetY}px`;
+                card.style.left = `${rect.left}px`;
+                card.style.width = `${rect.width}px`;
+                card.style.boxSizing = 'border-box';
+                card.style.zIndex = '9999';
+                card.classList.add('dragging');
+                document.body.scrollTop = 0;
+                currentClientY = touchY;
+                requestAnimationFrame(autoScroll);
+                document.addEventListener('mousemove', handleMove);
+                document.addEventListener('touchmove', handleMove, { passive: false });
+                document.addEventListener('mouseup', handleEnd);
+                document.addEventListener('touchend', handleEnd);
+                document.addEventListener('touchcancel', handleEnd);
+            } catch (err) {
+                console.error("Errore avvio drag:", err);
+                cleanup();
+            }
+        };
+
+        const handleMove = (e) => {
+            if (!isDragging) return;
+            if (e.cancelable) e.preventDefault();
+            const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+            currentClientY = clientY;
+            if (draggingItem) draggingItem.style.top = `${clientY - dragOffsetY}px`;
+            updateOrder(clientY);
+        };
+
+        const handleEnd = () => {
+            if (!isDragging) return;
+            if (draggingItem && placeholder && placeholder.parentNode) {
+                placeholder.parentNode.insertBefore(draggingItem, placeholder);
+            }
+            const newOrderIds = [...list.querySelectorAll('.list-item-container')].map(c => c.dataset.id);
+            let piani = getFromLocalStorage('pianiDiAllenamento');
+            const piano = piani.find(p => p.id === pianoId);
+            const newRoutines = [];
+            newOrderIds.forEach(id => {
+                const r = piano.routine.find(rt => rt.id === id);
+                if (r) newRoutines.push(r);
+            });
+            if (newRoutines.length === piano.routine.length) {
+                piano.routine = newRoutines;
+                saveToLocalStorage('pianiDiAllenamento', piani);
+            }
+            cleanup();
+        };
+
+        list.addEventListener('mousedown', handleStart);
+        list.addEventListener('touchstart', handleStart, { passive: false });
     }
 }
 

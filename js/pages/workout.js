@@ -570,6 +570,9 @@ window.setupAllenamentoPage = function() {
 
     // --- Funzione Notifica Silenziosa (Background Monitor) ---
     function updateSilentNotification() {
+        // Verifica se le notifiche sono abilitate nelle impostazioni (default true)
+        if (localStorage.getItem('notificationsEnabled') === 'false') return;
+
         if (!('Notification' in window) || Notification.permission !== 'granted') return;
 
         // 1. Trova il prossimo set da fare

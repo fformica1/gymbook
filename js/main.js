@@ -109,7 +109,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Inizializzazione Gestore Allenamento Globale ---
     // Gestisce notifiche e timer in background indipendentemente dalla pagina corrente
-    initGlobalWorkoutManager();
+    try {
+        initGlobalWorkoutManager();
+    } catch (e) {
+        console.error("Errore initGlobalWorkoutManager:", e);
+    }
 });
 
 let globalWorkoutManager = null;
@@ -231,6 +235,9 @@ function initGlobalWorkoutManager() {
     }
 }
 
+let lastNotificationTitle = null;
+let lastNotificationBody = null;
+
 function updateGlobalNotification() {
     if (localStorage.getItem('notificationsEnabled') === 'false') return;
     if (!('Notification' in window) || Notification.permission !== 'granted') return;
@@ -297,6 +304,11 @@ function updateGlobalNotification() {
         }
     }
 
+    // Ottimizzazione: Non aggiornare se il contenuto è identico (evita wake screen)
+    if (title === lastNotificationTitle && body === lastNotificationBody) return;
+    lastNotificationTitle = title;
+    lastNotificationBody = body;
+
     // Invia Notifica
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.ready.then(registration => {
@@ -306,6 +318,7 @@ function updateGlobalNotification() {
                 tag: 'gymbook-active-workout',
                 renotify: false,
                 silent: true,
+                requireInteraction: true,
                 ongoing: true,
                 data: { url: 'allenamento.html?pianoId=' + activeWorkout.pianoId + '&routineId=' + activeWorkout.routineId }
             });
@@ -324,11 +337,18 @@ function manageNativeBackButton(currentPage) {
     // pushState: aggiunge un nuovo stato fittizio in cima.
     // Risultato: L'utente è visivamente sulla pagina, ma tecnicamente è "avanti" di 1 step.
     // Premendo indietro, torna allo stato "base" e scatta l'evento 'popstate'.
-    const state = { page: currentPage, gymbook: true, timestamp: Date.now() };
+    const state = { page: currentPage, gymbook: true };
     
-    // Creazione immediata della trappola nella history
-    history.replaceState(state, '', location.href);
-    history.pushState(state, '', location.href);
+    // RIPRISTINO LOGICA v1.15.4: Creazione condizionale del cuscinetto
+    if (currentPage === 'home') {
+        // Sulla Home forziamo sempre la creazione del cuscinetto per il loop
+        history.replaceState(state, '', location.href);
+        history.pushState(state, '', location.href);
+    } else if (history.state === null) {
+        // Sulle altre pagine lo creiamo solo se manca (es. refresh o primo accesso diretto)
+        // Se arriviamo da un replace() interno, manteniamo lo stato esistente per non rompere la navigazione
+        history.pushState(state, '', location.href);
+    }
 
     // 3. Gestione Evento Indietro (popstate)
     window.addEventListener('popstate', (event) => {

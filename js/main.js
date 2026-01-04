@@ -130,6 +130,12 @@ function manageNativeBackButton(currentPage) {
     }
 
     window.addEventListener('popstate', (event) => {
+        // Se premendo indietro ci troviamo sulla home, blocchiamo la navigazione.
+        if (getCurrentPage() === 'home') {
+            history.pushState(state, '', location.href);
+            return;
+        }
+
         // Impediamo al browser di tornare indietro nella history reale
         // e reinseriamo lo stato per mantenere il blocco se l'utente preme ancora back
         history.pushState(state, '', location.href);
@@ -143,8 +149,8 @@ function manageNativeBackButton(currentPage) {
         // Logica ad albero: definisce il "Genitore" di ogni pagina
         switch (currentPage) {
             case 'home':
-                // Rimaniamo qui. Il pushState all'inizio del listener ha già annullato l'azione di uscita.
-                // Non facciamo nulla, bloccando l'utente sulla Home.
+                // Questo caso non dovrebbe più essere raggiunto grazie al controllo sopra,
+                // ma lo lasciamo per sicurezza.
                 break;
             case 'piani':
                 window.location.replace('index.html');

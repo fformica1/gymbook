@@ -302,7 +302,7 @@ function updateGlobalNotification() {
             // body resta nextSetText per sapere cosa fare dopo
         } else {
             title = `RECUPERO TERMINATO!`;
-            body = `Tocca per riprendere. ${nextSetText}`;
+            // body resta nextSetText per sapere cosa fare dopo
         }
     }
 

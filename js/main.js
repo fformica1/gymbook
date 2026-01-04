@@ -107,9 +107,150 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Gestione Tasto Indietro Nativo (Tree Navigation) ---
     manageNativeBackButton(currentPage);
 
-    // --- Avvia il controllo globale del timer (Background Check) ---
-    if (typeof startGlobalTimerCheck === 'function') startGlobalTimerCheck();
+    // --- Inizializzazione Gestore Allenamento Globale ---
+    // Gestisce notifiche e timer in background indipendentemente dalla pagina corrente
+    initGlobalWorkoutManager();
 });
+
+let globalWorkoutManager = null;
+
+function initGlobalWorkoutManager() {
+    // Se esiste già, non ricrearlo
+    if (globalWorkoutManager) return;
+
+    const silentAudioSrc = 'data:audio/mpeg;base64,SUQzBAAAAAABAFRYWFgAAAASAAADbWFqb3JfYnJhbmQAbXA0MgBUWFhYAAAAEQAAA21pbm9yX3ZlcnNpb24AMABUWFhYAAAAHAAAA2NvbXBhdGlibGVfYnJhbmRzAGlzb21tcDQyAFRTU0UAAAAPAAADTGF2ZjU3LjU2LjEwMAAAAAAAAAAAAAAA//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq';
+    
+    // Worker Blob per il timer (evita throttling del main thread)
+    const timerWorkerBlob = new Blob([`
+        let intervalId;
+        self.onmessage = function(e) {
+            if (e.data === 'start') {
+                if (!intervalId) {
+                    intervalId = setInterval(() => {
+                        self.postMessage('tick');
+                    }, 1000);
+                }
+            } else if (e.data === 'stop') {
+                if (intervalId) {
+                    clearInterval(intervalId);
+                    intervalId = null;
+                }
+            }
+        };
+    `], { type: 'text/javascript' });
+
+    globalWorkoutManager = {
+        audio: new Audio(silentAudioSrc),
+        worker: new Worker(URL.createObjectURL(timerWorkerBlob)),
+        
+        start: function() {
+            // Avvia audio
+            this.audio.loop = true;
+            this.audio.play().catch(() => {
+                // Se l'autoplay è bloccato, attende la prima interazione
+                const resume = () => {
+                    this.audio.play();
+                    document.removeEventListener('click', resume);
+                    document.removeEventListener('touchstart', resume);
+                };
+                document.addEventListener('click', resume);
+                document.addEventListener('touchstart', resume);
+            });
+
+            // Media Session API
+            if ('mediaSession' in navigator) {
+                navigator.mediaSession.metadata = new MediaMetadata({
+                    title: "Allenamento in Corso",
+                    artist: "GymBook",
+                    album: "Timer Attivo",
+                    artwork: [{ src: 'icon-browser.png', sizes: '192x192', type: 'image/png' }]
+                });
+                navigator.mediaSession.playbackState = 'playing';
+            }
+
+            // Avvia Worker
+            this.worker.postMessage('start');
+        },
+
+        stop: function() {
+            this.audio.pause();
+            this.audio.currentTime = 0;
+            this.worker.postMessage('stop');
+            if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'none';
+        }
+    };
+
+    // Configurazione Audio Element
+    globalWorkoutManager.audio.style.cssText = 'position: absolute; width: 1px; height: 1px; opacity: 0.001; z-index: -1; pointer-events: none;';
+    document.body.appendChild(globalWorkoutManager.audio);
+
+    // Gestione Tick del Worker
+    globalWorkoutManager.worker.onmessage = function(e) {
+        if (e.data === 'tick') {
+            // 1. Aggiorna Notifica
+            updateGlobalNotification();
+            
+            // 2. Controlla fine recupero (Audio)
+            const recoveryEndTime = localStorage.getItem('recoveryEndTime');
+            if (recoveryEndTime) {
+                const now = Date.now();
+                if (now >= recoveryEndTime && !localStorage.getItem('recoverySoundPlayed')) {
+                    if (typeof playNotificationSound === 'function') playNotificationSound();
+                    localStorage.setItem('recoverySoundPlayed', 'true');
+                }
+            }
+        }
+    };
+
+    // Se c'è un allenamento attivo al caricamento della pagina, riavvia il manager
+    if (localStorage.getItem('workoutStartTime')) {
+        globalWorkoutManager.start();
+    }
+}
+
+function updateGlobalNotification() {
+    if (localStorage.getItem('notificationsEnabled') === 'false') return;
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+
+    const activeWorkout = JSON.parse(localStorage.getItem('activeWorkout'));
+    if (!activeWorkout) return;
+
+    const piani = JSON.parse(localStorage.getItem('pianiDiAllenamento')) || [];
+    const piano = piani.find(p => p.id === activeWorkout.pianoId);
+    const routine = piano?.routine.find(r => r.id === activeWorkout.routineId);
+    if (!routine) return;
+
+    // Titolo
+    let title = routine.nome;
+    const recoveryEndTime = localStorage.getItem('recoveryEndTime');
+    if (recoveryEndTime) {
+        const now = Date.now();
+        if (recoveryEndTime > now) {
+            const remaining = Math.ceil((recoveryEndTime - now) / 1000);
+            const min = Math.floor(remaining / 60);
+            const sec = String(remaining % 60).padStart(2, '0');
+            title = `Recupero: ${min}:${sec}`;
+        } else {
+            title = `RECUPERO TERMINATO!`;
+        }
+    }
+
+    // Invia Notifica
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.ready.then(registration => {
+            registration.showNotification(title, {
+                body: 'Tocca per tornare all\'allenamento',
+                icon: 'icon-browser.png',
+                tag: 'gymbook-active-workout',
+                renotify: false,
+                silent: true,
+                requireInteraction: true,
+                ongoing: true,
+                data: { url: 'allenamento.html?pianoId=' + activeWorkout.pianoId + '&routineId=' + activeWorkout.routineId }
+            });
+        });
+    }
+}
 
 function manageNativeBackButton(currentPage) {
     // 1. Configurazione History API

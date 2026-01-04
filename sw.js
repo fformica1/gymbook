@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gymbook-v1.15.4';
+const CACHE_NAME = 'gymbook-v1.15.5';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

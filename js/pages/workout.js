@@ -74,101 +74,12 @@ window.setupAllenamentoPage = function() {
     let workoutState = getFromLocalStorage('activeWorkoutState') || null;
     const storico = getFromLocalStorage('storicoAllenamenti') || [];
 
-    // --- Silent Audio Hack (Per mantenere attivo il timer in background) ---
-    // Un brevissimo file MP3 di silenzio codificato in base64
-    const silentAudioSrc = 'data:audio/mpeg;base64,SUQzBAAAAAABAFRYWFgAAAASAAADbWFqb3JfYnJhbmQAbXA0MgBUWFhYAAAAEQAAA21pbm9yX3ZlcnNpb24AMABUWFhYAAAAHAAAA2NvbXBhdGlibGVfYnJhbmRzAGlzb21tcDQyAFRTU0UAAAAPAAADTGF2ZjU3LjU2LjEwMAAAAAAAAAAAAAAA//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq';
-    
-    // FIX: Creiamo l'elemento audio e lo aggiungiamo al DOM per evitare che il browser lo scarti
-    let silentAudio = new Audio(silentAudioSrc);
-    // Evitiamo display: none perché i browser potrebbero sospendere il media. Lo rendiamo invisibile ma presente.
-    silentAudio.style.cssText = 'position: absolute; width: 1px; height: 1px; opacity: 0.001; z-index: -1; pointer-events: none;';
-    document.body.appendChild(silentAudio);
-    silentAudio.loop = true;
-
-    function enableBackgroundMode() {
-        // Avvia l'audio silenzioso solo se non è già in riproduzione
-        if (silentAudio.paused) {
-            silentAudio.play().catch(e => {
-                console.log("Silent audio play failed (user interaction needed):", e);
-                // Fallback: Riprova al primo tocco dell'utente se l'autoplay è bloccato
-                const resumeAudio = () => {
-                    silentAudio.play();
-                    document.removeEventListener('click', resumeAudio);
-                    document.removeEventListener('touchstart', resumeAudio);
-                };
-                document.addEventListener('click', resumeAudio);
-                document.addEventListener('touchstart', resumeAudio);
-            });
-        }
-
-        // --- FIX: Media Session API per evitare throttling su Android ---
-        // Segnala al sistema che l'app è un media player attivo, prevenendo il blocco del timer
-        if ('mediaSession' in navigator) {
-            navigator.mediaSession.metadata = new MediaMetadata({
-                title: "Allenamento in Corso",
-                artist: "GymBook",
-                album: "Timer Attivo",
-                artwork: [{ src: 'icon-browser.png', sizes: '192x192', type: 'image/png' }]
-            });
-            navigator.mediaSession.playbackState = 'playing';
-            // Handler fittizi necessari per mantenere attiva la sessione
-            navigator.mediaSession.setActionHandler('play', () => silentAudio.play());
-            navigator.mediaSession.setActionHandler('pause', () => {}); 
-            navigator.mediaSession.setActionHandler('stop', () => {});
-        }
-    }
-    function disableBackgroundMode() {
-        silentAudio.pause();
-        silentAudio.currentTime = 0;
-        // Non rimuoviamo l'elemento dal DOM per poterlo riutilizzare
-        if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'none';
-    }
-
-    // --- Web Worker per Timer (Anti-Throttling) ---
-    // Spostiamo il setInterval in un worker separato per evitare che il browser
-    // blocchi il timer quando la pagina è in background.
-    const timerWorkerBlob = new Blob([`
-        let intervalId;
-        self.onmessage = function(e) {
-            if (e.data === 'start') {
-                if (!intervalId) {
-                    intervalId = setInterval(() => {
-                        self.postMessage('tick');
-                    }, 1000);
-                }
-            } else if (e.data === 'stop') {
-                if (intervalId) {
-                    clearInterval(intervalId);
-                    intervalId = null;
-                }
-            }
-        };
-    `], { type: 'text/javascript' });
-    const timerWorker = new Worker(URL.createObjectURL(timerWorkerBlob));
-
-    // Gestore unico del "battito" del timer
-    timerWorker.onmessage = function(e) {
-        if (e.data === 'tick') {
-            // FIX: Controllo di sicurezza. Se l'audio si è fermato (es. interruzione sistema), riavvialo.
-            if (silentAudio.paused && getFromLocalStorage('workoutStartTime')) {
-                console.log("Audio background interrotto, tentativo riavvio...");
-                silentAudio.play().catch(() => {});
-            }
-
-            // 1. Aggiorna Timer Allenamento
-            if (getFromLocalStorage('workoutStartTime')) {
-                updateWorkoutTimerUI();
-                // Aggiorna la notifica persistente ogni secondo
-                updateSilentNotification();
-            }
-
-            // 2. Aggiorna Timer Recupero
-            // Controlliamo anche se esiste un tempo di fine recupero, anche se scaduto (per mostrare 00:00)
-            if (getFromLocalStorage('recoveryEndTime')) {
-                updateRecoveryTimerUI();
-            }
-        }
-    };
+    // Loop locale per aggiornare la UI (il background è gestito da main.js)
+    // Usiamo setInterval standard perché siamo in primo piano
+    const uiInterval = setInterval(() => {
+        if (getFromLocalStorage('workoutStartTime')) updateWorkoutTimerUI();
+        if (getFromLocalStorage('recoveryEndTime')) updateRecoveryTimerUI();
+    }, 1000);
 
     // Controllo Modalità Anteprima (se c'è un allenamento attivo ma stiamo visualizzando un'altra routine)
     const activeWorkout = getFromLocalStorage('activeWorkout');
@@ -568,67 +479,6 @@ window.setupAllenamentoPage = function() {
         localStorage.removeItem('recoverySoundPlayed');
     });
 
-    // --- Funzione Notifica Silenziosa (Background Monitor) ---
-    function updateSilentNotification() {
-        // Verifica se le notifiche sono abilitate nelle impostazioni (default true)
-        if (localStorage.getItem('notificationsEnabled') === 'false') return;
-
-        if (!('Notification' in window) || Notification.permission !== 'granted') return;
-
-        // 1. Trova il prossimo set da fare
-        let nextSetInfo = "Allenamento Completato";
-        const cards = container.querySelectorAll('.esercizio-card');
-        let found = false;
-        
-        for (const card of cards) {
-            if (found) break;
-            const rows = card.querySelectorAll('.set-row');
-            for (const row of rows) {
-                if (row.querySelector('.btn-check-set').dataset.completed !== 'true') {
-                    const exerciseName = card.querySelector('h2').textContent;
-                    const kg = row.querySelector('.weight-input').value;
-                    const reps = row.querySelector('.reps-input').value;
-                    nextSetInfo = `${exerciseName}: ${kg}kg x ${reps}`;
-                    found = true;
-                    break;
-                }
-            }
-        }
-
-        // 2. Determina il contenuto (Titolo = Recupero/Stato, Body = Prossimo Set)
-        let title = routine.nome;
-        let bodyPrefix = found ? "Prossimo: " : "";
-
-        const recoveryEndTime = getFromLocalStorage('recoveryEndTime');
-        if (recoveryEndTime && recoveryEndTime > Date.now()) {
-            const remaining = Math.ceil((recoveryEndTime - Date.now()) / 1000);
-            const min = Math.floor(remaining / 60);
-            const sec = String(remaining % 60).padStart(2, '0');
-            title = `Recupero: ${min}:${sec}`;
-        } else if (recoveryEndTime && recoveryEndTime <= Date.now()) {
-            // Recupero finito ma non ancora resettato (l'utente non ha ancora fatto nulla)
-            title = `RECUPERO TERMINATO!`;
-        }
-
-        let body = `${bodyPrefix}${nextSetInfo}`;
-
-        // 3. Invia/Aggiorna notifica tramite Service Worker
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.ready.then(registration => {
-                registration.showNotification(title, {
-                    body: body,
-                    icon: 'icon-browser.png',
-                    tag: 'gymbook-active-workout', // Tag UNICO per tutta la sessione
-                    renotify: false,       // IMPORTANTE: Niente suono/vibrazione all'aggiornamento
-                    vibrate: [],           // Nessuna vibrazione (rimosso silent: true per visibilità lockscreen)
-                    requireInteraction: true, // Tenta di mantenerla persistente
-                    ongoing: true,         // Impedisce la rimozione manuale (Android)
-                    data: { url: window.location.href } // Passa l'URL corrente per il click
-                });
-            });
-        }
-    }
-
     // Funzione per mostrare il modale dello storico
     function showHistoryModal(exerciseName, historyData) {
         let modal = document.getElementById('history-modal');
@@ -731,16 +581,15 @@ window.setupAllenamentoPage = function() {
             workoutTimerEl.textContent = "00:00";
             return;
         }
-
-        enableBackgroundMode(); // Assicura che l'audio sia attivo se ricarichiamo la pagina
-        saveToLocalStorage('activeWorkout', { pianoId, routineId });
         
+        // Avvia il manager globale (Audio + Worker)
+        if (window.globalWorkoutManager) window.globalWorkoutManager.start();
+        
+        saveToLocalStorage('activeWorkout', { pianoId, routineId });
         updateWorkoutTimerUI(); // Aggiornamento immediato
-        timerWorker.postMessage('start'); // Avvia il worker
     }
 
     function startRecoveryTimer(duration, isSyncing = false) {
-        // Non serve più clearInterval, il worker gira sempre
         recoveryTimerContainer.classList.remove('timer-finished');
         if (workoutHeader) workoutHeader.classList.remove('timer-finished');
         if (workoutStickyHeader) workoutStickyHeader.classList.remove('timer-finished');
@@ -749,7 +598,6 @@ window.setupAllenamentoPage = function() {
             localStorage.removeItem('recoverySoundPlayed');
         }
         updateRecoveryTimerUI(); // Aggiornamento immediato
-        timerWorker.postMessage('start'); // Assicura che il worker sia attivo
     }
 
     function saveCurrentWorkoutState() {
@@ -772,8 +620,9 @@ window.setupAllenamentoPage = function() {
     // Funzione helper per terminare l'allenamento
     function finishWorkout(saveData) {
         if (wakeLock) wakeLock.release();
-        timerWorker.postMessage('stop'); // Ferma il worker
-        disableBackgroundMode(); // Ferma l'audio silenzioso
+        clearInterval(uiInterval);
+        
+        if (window.globalWorkoutManager) window.globalWorkoutManager.stop();
         
         // Pulisce lo stato dell'allenamento attivo
         localStorage.removeItem('activeWorkout');
@@ -872,7 +721,6 @@ window.setupAllenamentoPage = function() {
         if (!getFromLocalStorage('workoutStartTime')) {
             saveToLocalStorage('workoutStartTime', Date.now());
             saveToLocalStorage('activeWorkout', { pianoId, routineId });
-            enableBackgroundMode(); // Attiva il background mode al click
             startWorkoutTimer();
             updateWorkoutButton();
             return;

@@ -231,6 +231,9 @@ function initGlobalWorkoutManager() {
     }
 }
 
+let lastNotificationTitle = null;
+let lastNotificationBody = null;
+
 function updateGlobalNotification() {
     if (localStorage.getItem('notificationsEnabled') === 'false') return;
     if (!('Notification' in window) || Notification.permission !== 'granted') return;
@@ -243,20 +246,44 @@ function updateGlobalNotification() {
     const routine = piano?.routine.find(r => r.id === activeWorkout.routineId);
     if (!routine) return;
 
-    // Calcola Timer Allenamento (per sincronizzazione visiva)
-    const startTime = localStorage.getItem('workoutStartTime');
-    let workoutTimerStr = "";
-    if (startTime) {
-        const totalSeconds = Math.floor((Date.now() - startTime) / 1000);
-        const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
-        const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
-        const seconds = String(totalSeconds % 60).padStart(2, '0');
-        workoutTimerStr = `${hours}:${minutes}:${seconds}`;
+    // Calcolo Prossimo Set (Logica identica alla Home)
+    const workoutState = JSON.parse(localStorage.getItem('activeWorkoutState'));
+    let nextSetText = "Inizio Allenamento";
+    let foundNext = false;
+
+    if (routine.esercizi && routine.esercizi.length > 0) {
+        for (const ex of routine.esercizi) {
+            if (foundNext) break;
+            
+            // Controlla se esiste uno stato salvato per questo esercizio
+            const exState = workoutState?.esercizi?.[ex.id];
+            
+            if (exState && exState.serie) {
+                // Cerca la prima serie non completata nello stato
+                const firstIncompleteIndex = exState.serie.findIndex(s => !s.completed);
+                if (firstIncompleteIndex !== -1) {
+                    const s = exState.serie[firstIncompleteIndex];
+                    nextSetText = `→ ${ex.nome}: ${s.kg}kg x ${s.reps}`;
+                    foundNext = true;
+                }
+            } else {
+                // Se non c'è stato (es. inizio allenamento), prendi la prima serie della definizione
+                if (ex.serie && ex.serie.length > 0) {
+                    const s = ex.serie[0];
+                    nextSetText = `→ ${ex.nome}: ${s.kg}kg x ${s.reps}`;
+                    foundNext = true;
+                }
+            }
+        }
+        
+        if (!foundNext && workoutState) {
+            nextSetText = "Allenamento Completato";
+        }
     }
 
     // Titolo
     let title = routine.nome;
-    let body = `Tempo: ${workoutTimerStr}`;
+    let body = nextSetText;
 
     const recoveryEndTime = localStorage.getItem('recoveryEndTime');
     if (recoveryEndTime) {
@@ -266,12 +293,17 @@ function updateGlobalNotification() {
             const min = Math.floor(remaining / 60);
             const sec = String(remaining % 60).padStart(2, '0');
             title = `Recupero: ${min}:${sec}`;
-            body = `Allenamento: ${workoutTimerStr}`; // Mostra il timer generale nel body durante il recupero
+            // body resta nextSetText per sapere cosa fare dopo
         } else {
             title = `RECUPERO TERMINATO!`;
-            body = `Tocca per riprendere. Tempo: ${workoutTimerStr}`;
+            body = `Tocca per riprendere. ${nextSetText}`;
         }
     }
+
+    // Ottimizzazione: Non aggiornare se il contenuto è identico (evita wake screen)
+    if (title === lastNotificationTitle && body === lastNotificationBody) return;
+    lastNotificationTitle = title;
+    lastNotificationBody = body;
 
     // Invia Notifica
     if ('serviceWorker' in navigator) {
@@ -282,7 +314,7 @@ function updateGlobalNotification() {
                 tag: 'gymbook-active-workout',
                 renotify: false,
                 silent: true,
-                requireInteraction: true,
+                vibrate: [],
                 ongoing: true,
                 data: { url: 'allenamento.html?pianoId=' + activeWorkout.pianoId + '&routineId=' + activeWorkout.routineId }
             });
@@ -301,9 +333,14 @@ function manageNativeBackButton(currentPage) {
     // pushState: aggiunge un nuovo stato fittizio in cima.
     // Risultato: L'utente è visivamente sulla pagina, ma tecnicamente è "avanti" di 1 step.
     // Premendo indietro, torna allo stato "base" e scatta l'evento 'popstate'.
-    const state = { page: currentPage, gymbook: true };
-    history.replaceState(state, '', location.href);
-    history.pushState(state, '', location.href);
+    const state = { page: currentPage, gymbook: true, timestamp: Date.now() };
+    
+    // FIX: Ritardiamo leggermente la manipolazione della history per compatibilità
+    // Questo assicura che il browser registri correttamente lo stato anche su dispositivi più lenti
+    setTimeout(() => {
+        history.replaceState(state, '', location.href);
+        history.pushState(state, '', location.href);
+    }, 10);
 
     // 3. Gestione Evento Indietro (popstate)
     window.addEventListener('popstate', (event) => {

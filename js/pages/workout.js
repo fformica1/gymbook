@@ -396,7 +396,7 @@ window.setupAllenamentoPage = function() {
         }
 
         // 5. Handle History Click (Popup storico ultimi 4 allenamenti)
-        if (historySpan && card && !card.classList.contains('dimmed')) {
+        if (historySpan && !isPreviewMode && card && !card.classList.contains('dimmed')) {
             const exerciseId = historySpan.dataset.exerciseId;
             
             const exerciseDef = routine.esercizi.find(e => e.id === exerciseId);
@@ -547,6 +547,10 @@ window.setupAllenamentoPage = function() {
 
     // Funzioni di aggiornamento UI (separate dal loop)
     function updateWorkoutTimerUI() {
+        if (isPreviewMode) {
+            workoutTimerEl.textContent = "Anteprima";
+            return;
+        }
         const startTime = getFromLocalStorage('workoutStartTime');
         if (!startTime) return;
         const totalSeconds = Math.floor((Date.now() - startTime) / 1000);
@@ -554,6 +558,9 @@ window.setupAllenamentoPage = function() {
     }
 
     function updateRecoveryTimerUI() {
+        if (isPreviewMode) {
+            return;
+        }
         const endTime = getFromLocalStorage('recoveryEndTime');
         if (!endTime) { recoveryTimerEl.textContent = "00:00"; return; }
         const remainingMs = endTime - Date.now();

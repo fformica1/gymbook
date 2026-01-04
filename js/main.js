@@ -118,44 +118,69 @@ function initGlobalWorkoutManager() {
     // Se esiste già, non ricrearlo
     if (globalWorkoutManager) return;
 
-    const silentAudioSrc = 'data:audio/mpeg;base64,SUQzBAAAAAABAFRYWFgAAAASAAADbWFqb3JfYnJhbmQAbXA0MgBUWFhYAAAAEQAAA21pbm9yX3ZlcnNpb24AMABUWFhYAAAAHAAAA2NvbXBhdGlibGVfYnJhbmRzAGlzb21tcDQyAFRTU0UAAAAPAAADTGF2ZjU3LjU2LjEwMAAAAAAAAAAAAAAA//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq';
-    
-    // Worker Blob per il timer (evita throttling del main thread)
+    // Worker Blob con Timer Auto-Correttivo (Drift Correction)
+    // Questo assicura che il timer non perda colpi anche se il browser rallenta l'esecuzione
     const timerWorkerBlob = new Blob([`
-        let intervalId;
+        let expected;
+        let timeoutId;
+
+        function step() {
+            const dt = Date.now() - expected; // Calcola la deriva temporale
+            if (dt > 1000) {
+                // Se la deriva è enorme (es. tab sospeso a lungo), resetta l'aspettativa
+                expected = Date.now();
+            }
+            
+            self.postMessage('tick');
+            
+            expected += 1000;
+            // Pianifica il prossimo tick sottraendo la deriva per restare sincronizzati
+            timeoutId = setTimeout(step, Math.max(0, 1000 - dt));
+        }
+
         self.onmessage = function(e) {
             if (e.data === 'start') {
-                if (!intervalId) {
-                    intervalId = setInterval(() => {
-                        self.postMessage('tick');
-                    }, 1000);
-                }
+                expected = Date.now() + 1000;
+                step();
             } else if (e.data === 'stop') {
-                if (intervalId) {
-                    clearInterval(intervalId);
-                    intervalId = null;
-                }
+                clearTimeout(timeoutId);
             }
         };
     `], { type: 'text/javascript' });
 
     globalWorkoutManager = {
-        audio: new Audio(silentAudioSrc),
+        audioCtx: null,
+        oscillator: null,
         worker: new Worker(URL.createObjectURL(timerWorkerBlob)),
         
         start: function() {
-            // Avvia audio
-            this.audio.loop = true;
-            this.audio.play().catch(() => {
-                // Se l'autoplay è bloccato, attende la prima interazione
-                const resume = () => {
-                    this.audio.play();
-                    document.removeEventListener('click', resume);
-                    document.removeEventListener('touchstart', resume);
-                };
-                document.addEventListener('click', resume);
-                document.addEventListener('touchstart', resume);
-            });
+            // Inizializza Web Audio API (Più robusto dell'elemento <audio> per il background)
+            if (!this.audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                this.audioCtx = new AudioContext();
+            }
+
+            const resumeAudio = () => {
+                if (this.audioCtx.state === 'suspended') {
+                    this.audioCtx.resume();
+                }
+                // Crea un oscillatore silenzioso ma attivo per tenere sveglio il thread audio
+                if (!this.oscillator) {
+                    this.oscillator = this.audioCtx.createOscillator();
+                    const gainNode = this.audioCtx.createGain();
+                    gainNode.gain.value = 0.001; // Volume quasi zero (non zero per evitare ottimizzazioni)
+                    this.oscillator.connect(gainNode);
+                    gainNode.connect(this.audioCtx.destination);
+                    this.oscillator.start();
+                }
+                document.removeEventListener('click', resumeAudio);
+                document.removeEventListener('touchstart', resumeAudio);
+            };
+
+            // Tenta avvio immediato o al primo tocco
+            resumeAudio();
+            document.addEventListener('click', resumeAudio);
+            document.addEventListener('touchstart', resumeAudio);
 
             // Media Session API
             if ('mediaSession' in navigator) {
@@ -173,16 +198,14 @@ function initGlobalWorkoutManager() {
         },
 
         stop: function() {
-            this.audio.pause();
-            this.audio.currentTime = 0;
+            if (this.oscillator) {
+                try { this.oscillator.stop(); } catch(e) {}
+                this.oscillator = null;
+            }
             this.worker.postMessage('stop');
             if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'none';
         }
     };
-
-    // Configurazione Audio Element
-    globalWorkoutManager.audio.style.cssText = 'position: absolute; width: 1px; height: 1px; opacity: 0.001; z-index: -1; pointer-events: none;';
-    document.body.appendChild(globalWorkoutManager.audio);
 
     // Gestione Tick del Worker
     globalWorkoutManager.worker.onmessage = function(e) {
@@ -220,8 +243,21 @@ function updateGlobalNotification() {
     const routine = piano?.routine.find(r => r.id === activeWorkout.routineId);
     if (!routine) return;
 
+    // Calcola Timer Allenamento (per sincronizzazione visiva)
+    const startTime = localStorage.getItem('workoutStartTime');
+    let workoutTimerStr = "";
+    if (startTime) {
+        const totalSeconds = Math.floor((Date.now() - startTime) / 1000);
+        const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+        const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+        const seconds = String(totalSeconds % 60).padStart(2, '0');
+        workoutTimerStr = `${hours}:${minutes}:${seconds}`;
+    }
+
     // Titolo
     let title = routine.nome;
+    let body = `Tempo: ${workoutTimerStr}`;
+
     const recoveryEndTime = localStorage.getItem('recoveryEndTime');
     if (recoveryEndTime) {
         const now = Date.now();
@@ -230,8 +266,10 @@ function updateGlobalNotification() {
             const min = Math.floor(remaining / 60);
             const sec = String(remaining % 60).padStart(2, '0');
             title = `Recupero: ${min}:${sec}`;
+            body = `Allenamento: ${workoutTimerStr}`; // Mostra il timer generale nel body durante il recupero
         } else {
             title = `RECUPERO TERMINATO!`;
+            body = `Tocca per riprendere. Tempo: ${workoutTimerStr}`;
         }
     }
 
@@ -239,7 +277,7 @@ function updateGlobalNotification() {
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.ready.then(registration => {
             registration.showNotification(title, {
-                body: 'Tocca per tornare all\'allenamento',
+                body: body,
                 icon: 'icon-browser.png',
                 tag: 'gymbook-active-workout',
                 renotify: false,

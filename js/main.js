@@ -112,45 +112,49 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function manageNativeBackButton(currentPage) {
-    const state = { page: currentPage, gymbook: true };
-    
-    // Imposta il ripristino dello scroll manuale per evitare salti
+    // 1. Configurazione History API
     if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 
-    // Creiamo la trappola nella history
-    // PushState crea una nuova voce. Quando l'utente preme indietro, viene rimosso questo stato
-    // e scatta l'evento popstate, dove noi lo reinseriamo subito.
-    if (currentPage === 'home') {
-        // Sulla Home forziamo sempre la creazione del cuscinetto
-        history.replaceState(state, '', location.href);
-        history.pushState(state, '', location.href);
-    } else if (history.state === null) {
-        // Sulle altre pagine lo creiamo solo se manca
-        history.pushState(state, '', location.href);
-    }
+    // 2. Creazione "Trappola" Immediata
+    // Appena la pagina carica, manipoliamo la history per garantire che il tasto indietro
+    // sia intercettabile fin dal PRIMO tocco.
+    // replaceState: consolida l'URL corrente come "base".
+    // pushState: aggiunge un nuovo stato fittizio in cima.
+    // Risultato: L'utente è visivamente sulla pagina, ma tecnicamente è "avanti" di 1 step.
+    // Premendo indietro, torna allo stato "base" e scatta l'evento 'popstate'.
+    const state = { page: currentPage, gymbook: true };
+    history.replaceState(state, '', location.href);
+    history.pushState(state, '', location.href);
 
+    // 3. Gestione Evento Indietro (popstate)
     window.addEventListener('popstate', (event) => {
-        // Impediamo al browser di tornare indietro nella history reale
-        // e reinseriamo lo stato per mantenere il blocco se l'utente preme ancora back
-        history.pushState(state, '', location.href);
+        // Se siamo sulla HOME:
+        // L'utente non deve uscire o tornare indietro.
+        // Reinseriamo immediatamente lo stato per mantenere il blocco (loop).
+        if (currentPage === 'home') {
+            history.pushState(state, '', location.href);
+            return;
+        }
 
+        // Se siamo su ALTRE PAGINE:
+        // Non usiamo history.back() (che seguirebbe la cronologia temporale).
+        // Usiamo location.replace() per navigare forzatamente al GENITORE gerarchico.
+        
+        // Recuperiamo i parametri per decidere il genitore corretto
         const params = new URLSearchParams(window.location.search);
         const pianoId = params.get('pianoId');
         const routineId = params.get('routineId');
         const mode = params.get('mode');
         const from = params.get('from');
 
-        // Logica ad albero: definisce il "Genitore" di ogni pagina
+        // Definiamo la destinazione (Genitore)
         switch (currentPage) {
-            case 'home':
-                // Se l'utente preme indietro dalla home, ricarica la pagina per bloccarlo.
-                window.location.replace('index.html');
-                break;
             case 'piani':
                 window.location.replace('index.html');
                 break;
             case 'routine':
-                window.location.replace('piani.html');
+                // Se ho un pianoId torno ai piani, altrimenti home (fallback)
+                window.location.replace('piani.html'); 
                 break;
             case 'routine-dettaglio':
                 if (from === 'home') window.location.replace('index.html');
@@ -168,13 +172,12 @@ function manageNativeBackButton(currentPage) {
                 window.location.replace('index.html');
                 break;
             case 'allenamento':
-                const activeWorkout = getFromLocalStorage('activeWorkout');
-                const isPreviewMode = activeWorkout && (activeWorkout.pianoId !== pianoId || activeWorkout.routineId !== routineId);
-
-                // Se siamo in modalità anteprima ("allenamento-anteprima"), torniamo alla home.
-                // Anche dall'allenamento attivo, il comportamento di default è tornare alla home.
+                // Dall'allenamento si torna sempre alla Home
                 window.location.replace('index.html');
                 break;
+            default:
+                // Fallback di sicurezza
+                window.location.replace('index.html');
         }
     });
 }

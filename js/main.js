@@ -130,10 +130,11 @@ function manageNativeBackButton(currentPage) {
     }
 
     window.addEventListener('popstate', (event) => {
-        // Se premendo indietro ci troviamo sulla home, blocchiamo la navigazione.
+        // Se premendo indietro l'utente finisce sulla home (o era già sulla home),
+        // forziamo il ricaricamento della pagina per bloccare la navigazione all'indietro.
         if (getCurrentPage() === 'home') {
-            history.pushState(state, '', location.href);
-            return;
+            window.location.replace('index.html');
+            return; // Interrompe l'esecuzione per sicurezza
         }
 
         // Impediamo al browser di tornare indietro nella history reale

@@ -318,7 +318,7 @@ function updateGlobalNotification() {
                 tag: 'gymbook-active-workout',
                 renotify: false,
                 silent: true,
-                requireInteraction: true,
+                vibrate: [],
                 ongoing: true,
                 data: { url: 'allenamento.html?pianoId=' + activeWorkout.pianoId + '&routineId=' + activeWorkout.routineId }
             });
@@ -357,6 +357,8 @@ function manageNativeBackButton(currentPage) {
         // Reinseriamo immediatamente lo stato per mantenere il blocco (loop).
         if (currentPage === 'home') {
             history.pushState(state, '', location.href);
+            // Forza il ricaricamento/blocco sulla home come richiesto
+            window.location.replace('index.html');
             return;
         }
 

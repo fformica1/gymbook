@@ -74,7 +74,9 @@ function showConfirmModal(title, message, onConfirm, confirmBtnClass = 'btn-elim
     
     // Reset stato pulsanti (nel caso fossero stati nascosti da logiche specifiche)
     btnOk.style.display = ''; 
-    btnOk.className = confirmBtnClass; // Imposta la classe del pulsante (default: rosso)
+    // Rimuove tutte le classi e aggiunge quella base + quella specifica
+    btnOk.className = ''; 
+    btnOk.classList.add(confirmBtnClass);
     btnCancel.textContent = "Annulla";
 
     modal.style.display = 'flex';
@@ -263,4 +265,91 @@ function checkWeeklyUpdate() {
         localStorage.setItem('lastAutoUpdateWeek', currentWeekKey);
         performAppUpdate();
     }
+}
+
+// --- GESTIONE BACKUP E RIPRISTINO ---
+
+// Genera il JSON con tutti i dati
+function getBackupData() {
+    const data = {};
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        data[key] = localStorage.getItem(key);
+    }
+    return JSON.stringify(data, null, 2);
+}
+
+// Esegue il backup (Condivisione Nativa o Download)
+async function performBackup() {
+    const data = getBackupData();
+    const date = new Date().toISOString().slice(0, 10);
+    const filename = `OnePercent_Backup_${date}.json`;
+    const file = new File([data], filename, { type: 'application/json' });
+
+    // Salva il mese corrente come "Backup Eseguito"
+    const d = new Date();
+    const currentMonthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    localStorage.setItem('lastBackupMonth', currentMonthKey);
+
+    // Prova a usare la condivisione nativa (Drive, iCloud, ecc.)
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+            await navigator.share({
+                files: [file],
+                title: 'Backup OnePercent',
+                text: `Backup dati allenamento del ${date}`
+            });
+        } catch (error) {
+            if (error.name !== 'AbortError') {
+                console.error('Errore condivisione, fallback su download:', error);
+                downloadBackup(file);
+            }
+        }
+    } else {
+        // Fallback: Download classico
+        downloadBackup(file);
+    }
+}
+
+function downloadBackup(file) {
+    const url = URL.createObjectURL(file);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = file.name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+// Importa i dati da un file JSON
+async function importBackup(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const data = JSON.parse(e.target.result);
+                if (!data || typeof data !== 'object') throw new Error("Formato file non valido");
+                
+                localStorage.clear();
+                for (const key in data) {
+                    localStorage.setItem(key, data[key]);
+                }
+                resolve();
+            } catch (err) {
+                reject(err);
+            }
+        };
+        reader.onerror = reject;
+        reader.readAsText(file);
+    });
+}
+
+// Controlla se serve un backup (Promemoria Mensile)
+function checkBackupReminder() {
+    const d = new Date();
+    const currentMonthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const lastBackup = localStorage.getItem('lastBackupMonth');
+    
+    return lastBackup !== currentMonthKey;
 }

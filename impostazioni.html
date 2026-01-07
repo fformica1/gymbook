@@ -10,8 +10,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/global.css?v=1.17.6">
-    <link rel="stylesheet" href="css/components.css?v=1.17.6">
+    <link rel="stylesheet" href="css/global.css?v=1.17.8">
+    <link rel="stylesheet" href="css/components.css?v=1.17.8">
     <style>
         html { font-size: 15px; } /* Riduzione globale del font */
         body, h1, h2, h3, h4, h5, h6, p, span, div, a, button, input, textarea, select, label, li { font-family: 'Poppins', sans-serif !important; }
@@ -61,6 +61,20 @@
             </div>
 
             <div class="list-item-container" style="display: block; margin-top: 20px;">
+                <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 18px;">Backup e Ripristino</h3>
+                <button id="btn-backup" style="width: 100%; padding: 15px; background-color: var(--accent); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; margin-bottom: 10px;">
+                    Esegui Backup
+                </button>
+                <button id="btn-restore" style="width: 100%; padding: 15px; background-color: var(--card-bg); border: 1px solid var(--border-light); color: var(--text); border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer;">
+                    Importa Backup
+                </button>
+                <input type="file" id="file-restore" accept=".json" style="display: none;">
+                <p style="text-align: center; color: var(--text-dim); font-size: 0.85rem; margin-top: 10px;">
+                    Salva i tuoi dati su Google Drive, iCloud o in locale per non perderli.
+                </p>
+            </div>
+
+            <div class="list-item-container" style="display: block; margin-top: 20px;">
                 <button id="btn-update-app" style="width: 100%; padding: 15px; background-color: var(--card-bg); border: 1px solid var(--accent); color: var(--accent); border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer;">
                     Aggiorna App
                 </button>
@@ -80,7 +94,7 @@
         </section>
 
         <section style="margin-top: 20px; text-align: center; color: var(--text-dim);">
-        <p>OnePercent v1.17.6</p>
+        <p>OnePercent v1.17.8</p>
         </section>
     </div>
 
@@ -98,9 +112,9 @@
 
     <!-- La navbar non serve nella pagina impostazioni -->
 
-    <script src="js/utils.js?v=1.17.6"></script>
-    <script src="js/pages/settings.js?v=1.17.6"></script>
-    <script src="js/main.js?v=1.17.6"></script>
+    <script src="js/utils.js?v=1.17.8"></script>
+    <script src="js/pages/settings.js?v=1.17.8"></script>
+    <script src="js/main.js?v=1.17.8"></script>
     <script>
         // Script inline per gestire il salvataggio dell'incremento peso
         document.addEventListener('DOMContentLoaded', () => {

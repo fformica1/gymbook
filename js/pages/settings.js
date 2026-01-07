@@ -11,6 +11,37 @@ window.setupImpostazioniPage = function() {
         });
     }
 
+    // Gestione Backup
+    const btnBackup = document.getElementById('btn-backup');
+    if (btnBackup) {
+        btnBackup.addEventListener('click', () => {
+            performBackup();
+        });
+    }
+
+    // Gestione Ripristino
+    const btnRestore = document.getElementById('btn-restore');
+    const fileInput = document.getElementById('file-restore');
+    if (btnRestore && fileInput) {
+        btnRestore.addEventListener('click', () => fileInput.click());
+        
+        fileInput.addEventListener('change', async (e) => {
+            if (e.target.files.length > 0) {
+                const file = e.target.files[0];
+                showConfirmModal("Ripristino Dati", "ATTENZIONE: Questa operazione sovrascriverà TUTTI i dati attuali con quelli del backup.<br><br>Vuoi procedere?", async () => {
+                    try {
+                        await importBackup(file);
+                        alert("Ripristino completato con successo! L'app verrà ricaricata.");
+                        window.location.reload();
+                    } catch (err) {
+                        console.error(err);
+                        alert("Errore durante il ripristino: " + err.message);
+                    }
+                });
+            }
+        });
+    }
+
     // Gestione Aggiornamento App (Cache Busting Manuale)
     const btnUpdate = document.getElementById('btn-update-app');
     if (btnUpdate) {

@@ -81,6 +81,22 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Controllo Aggiornamento Settimanale ---
     if (typeof checkWeeklyUpdate === 'function') checkWeeklyUpdate();
 
+    // --- Controllo Promemoria Backup Mensile ---
+    if (typeof checkBackupReminder === 'function' && checkBackupReminder()) {
+        // Mostra il promemoria solo se non è già stato mostrato in questa sessione
+        if (!sessionStorage.getItem('backupReminderShown')) {
+            sessionStorage.setItem('backupReminderShown', 'true');
+            setTimeout(() => {
+                showConfirmModal(
+                    "Backup Consigliato", 
+                    "È passato un mese dall'ultimo backup.<br>Vuoi salvare i tuoi dati ora per sicurezza?", 
+                    () => { performBackup(); },
+                    "btn-avvia" // Usa lo stile verde/blu (positivo)
+                );
+            }, 1500); // Ritardo per non disturbare l'avvio
+        }
+    }
+
     // --- Inizializzazione Gestore Allenamento Globale ---
     // SPOSTATO QUI (Prima del setup pagine) per garantire che sia pronto all'uso
     try {

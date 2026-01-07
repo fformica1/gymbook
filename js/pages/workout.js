@@ -232,23 +232,61 @@ window.setupAllenamentoPage = function() {
     function updateExerciseFocus(forceCard = null) {
         if (isPreviewMode) return;
 
-        const cards = container.querySelectorAll('.esercizio-card');
-        
-        if (forceCard) {
-            currentActiveCard = forceCard;
+        // Attiva focus mode solo se l'allenamento è iniziato
+        if (!getFromLocalStorage('workoutStartTime')) {
+            container.querySelectorAll('.esercizio-card').forEach(c => c.classList.remove('dimmed'));
+            localStorage.removeItem('currentActiveExerciseId'); // Pulisci allo stop
+            return;
         }
 
-        // Se non c'è un esercizio attivo (es. avvio), trova il primo non completato
-        if (!currentActiveCard) {
-            for (const card of cards) {
-                const allSets = card.querySelectorAll('.btn-check-set');
-                const isComplete = Array.from(allSets).every(btn => btn.dataset.completed === 'true');
-                if (!isComplete) {
-                    currentActiveCard = card;
-                    break;
+        const cards = Array.from(container.querySelectorAll('.esercizio-card'));
+        let determinedCard = null;
+
+        // 1. PRIORITÀ MASSIMA: Trova il primo esercizio "in corso" (parzialmente completato).
+        // Se esiste, il focus è bloccato su di esso.
+        let inProgressCard = null;
+        for (const card of cards) {
+            const sets = card.querySelectorAll('.btn-check-set');
+            if (sets.length === 0) continue;
+            const completedCount = Array.from(sets).filter(s => s.dataset.completed === 'true').length;
+            if (completedCount > 0 && completedCount < sets.length) {
+                inProgressCard = card;
+                break; // Trovato, il focus è bloccato qui.
+            }
+        }
+
+        if (inProgressCard) {
+            // Se un esercizio è in corso, il focus è bloccato lì, ignorando qualsiasi click manuale.
+            determinedCard = inProgressCard;
+        } else {
+            // 2. NESSUN ESERCIZIO IN CORSO: Tutti gli esercizi sono o intatti o completati.
+            // In questo stato, il focus manuale è permesso.
+            if (forceCard) {
+                // Un click manuale ha suggerito un focus.
+                determinedCard = forceCard;
+            } else {
+                // Logica al caricamento pagina: ripristina l'ultimo focus manuale se valido.
+                const savedActiveId = getFromLocalStorage('currentActiveExerciseId');
+                if (savedActiveId) {
+                    determinedCard = container.querySelector(`.esercizio-card[data-esercizio-id="${savedActiveId}"]`);
+                }
+                
+                // Se non c'è un focus salvato o non è valido, trova il primo esercizio non completato.
+                if (!determinedCard) {
+                    for (const card of cards) {
+                        const allSets = card.querySelectorAll('.btn-check-set');
+                        const isComplete = allSets.length > 0 && Array.from(allSets).every(btn => btn.dataset.completed === 'true');
+                        if (!isComplete) {
+                            determinedCard = card;
+                            break;
+                        }
+                    }
                 }
             }
         }
+        
+        // Assegna la card determinata come quella attiva
+        currentActiveCard = determinedCard;
 
         cards.forEach(card => {
             if (currentActiveCard) {
@@ -258,19 +296,27 @@ window.setupAllenamentoPage = function() {
                     card.classList.add('dimmed');
                 }
             } else {
-                // Fallback se tutto è completo o nessun attivo trovato
                 card.classList.remove('dimmed');
             }
         });
+
+        // Salva l'ID della card in focus per poterlo ripristinare al ricaricamento della pagina
+        if (currentActiveCard) {
+            saveToLocalStorage('currentActiveExerciseId', currentActiveCard.dataset.esercizioId);
+        }
     }
-    updateExerciseFocus(); // Esegui all'avvio
+    
+    // Esegui all'avvio per impostare lo stato iniziale
+    // Se l'allenamento non è attivo, la funzione pulirà lo stato.
+    // Se è attivo, ripristinerà il focus corretto.
+    updateExerciseFocus(); 
 
     // Scroll automatico all'esercizio in corso quando si rientra nella pagina
     setTimeout(() => {
         if (isPreviewMode) return;
-        const activeCard = container.querySelector('.esercizio-card:not(.dimmed)');
-        if (activeCard) {
-            activeCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Usa la variabile globale che è stata appena calcolata da updateExerciseFocus
+        if (currentActiveCard) {
+            currentActiveCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
     }, 300);
 
@@ -317,18 +363,24 @@ window.setupAllenamentoPage = function() {
                 const allCompleted = Array.from(allSets).every(b => b.dataset.completed === 'true');
 
                 if (allCompleted) {
+                    let nextCardToFocus = null;
                     let nextCard = currentCard.nextElementSibling;
-                    while (nextCard && !nextCard.classList.contains('esercizio-card')) {
+
+                    // Cerca il prossimo esercizio non ancora completato
+                    while (nextCard) {
+                        if (nextCard.classList.contains('esercizio-card')) {
+                            const isNextComplete = Array.from(nextCard.querySelectorAll('.btn-check-set')).every(b => b.dataset.completed === 'true');
+                            if (!isNextComplete) {
+                                nextCardToFocus = nextCard;
+                                break; // Trovato, esci dal ciclo
+                            }
+                        }
                         nextCard = nextCard.nextElementSibling;
                     }
-                    if (nextCard) {
-                        updateExerciseFocus(nextCard);
-                        setTimeout(() => {
-                            nextCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        }, 500);
-                    } else {
-                        updateExerciseFocus(currentCard);
-                    }
+
+                    const cardToFocus = nextCardToFocus || currentCard;
+                    updateExerciseFocus(cardToFocus);
+                    setTimeout(() => cardToFocus.scrollIntoView({ behavior: 'smooth', block: 'start' }), 500);
                 } else {
                     updateExerciseFocus(currentCard);
                     // Se l'esercizio torna incompleto, riporta il focus e scorri su di esso
@@ -431,8 +483,8 @@ window.setupAllenamentoPage = function() {
 
         // 4. Handle click on the card itself for Focus Mode
         if (card) {
+            // Passa la card cliccata come "suggerimento". La funzione deciderà se usarla.
             updateExerciseFocus(card);
-            if (!isPreviewMode) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
     });
     
@@ -565,6 +617,16 @@ window.setupAllenamentoPage = function() {
         if (!endTime) { recoveryTimerEl.textContent = "00:00"; return; }
         const remainingMs = endTime - Date.now();
         if (remainingMs <= 0) {
+            // Se il timer è appena terminato (la classe non è ancora stata aggiunta)
+            if (!recoveryTimerContainer.classList.contains('timer-finished')) {
+                // Riesegui la logica di focus per trovare l'esercizio corretto (quello in corso)
+                updateExerciseFocus();
+                // E scorri su di esso
+                if (currentActiveCard) {
+                    currentActiveCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
+
             recoveryTimerEl.textContent = "00:00";
             recoveryTimerContainer.classList.add('timer-finished');
             if (workoutHeader) workoutHeader.classList.add('timer-finished');
@@ -639,6 +701,7 @@ window.setupAllenamentoPage = function() {
         localStorage.removeItem('recoverySoundPlayed');
         localStorage.removeItem('recoveryEndTime');
         localStorage.removeItem('activeWorkoutState');
+        localStorage.removeItem('currentActiveExerciseId'); // Pulisce l'ID dell'esercizio attivo
 
         // Rimuovi la notifica persistente
         if ('serviceWorker' in navigator) {
@@ -696,23 +759,15 @@ window.setupAllenamentoPage = function() {
 
                         // Se "Aggiorna routine" è spuntato, aggiorna i valori delle serie
                         if (updateRoutineToggle.dataset.checked === 'true') {
-                            const nuoveSerie = [];
-                            card.querySelectorAll('.set-row').forEach((riga, index) => {
+                            // Sostituisce completamente le vecchie serie con quelle presenti nella pagina
+                            // al momento del salvataggio.
+                            esercizioTarget.serie = Array.from(card.querySelectorAll('.set-row')).map(riga => {
                                 const inputs = riga.querySelectorAll('input[type="number"]');
-                                const kg = inputs[0].value || 0;
-                                const reps = inputs[1].value || 0;
-                                
-                                // Se la serie è stata completata, usa i nuovi valori
-                                if (riga.querySelector('.btn-check-set').dataset.completed === 'true') {
-                                    nuoveSerie.push({ kg, reps });
-                                } else {
-                                    // Altrimenti, mantieni i vecchi valori dalla routine originale
-                                    if (esercizioTarget.serie[index]) {
-                                        nuoveSerie.push(esercizioTarget.serie[index]);
-                                    }
-                                }
+                                return {
+                                    kg: inputs[0].value || 0,
+                                    reps: inputs[1].value || 0
+                                };
                             });
-                            esercizioTarget.serie = nuoveSerie;
                         }
                     }
                 });
@@ -732,6 +787,7 @@ window.setupAllenamentoPage = function() {
             saveToLocalStorage('activeWorkout', { pianoId, routineId });
             startWorkoutTimer();
             updateWorkoutButton();
+            updateExerciseFocus();
             return;
         }
 

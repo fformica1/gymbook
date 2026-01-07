@@ -213,3 +213,52 @@ function startGlobalTimerCheck() {
         }
     }, 1000);
 }
+
+// --- Funzione Aggiornamento App (Cache Busting) ---
+async function performAppUpdate() {
+    console.log("Esecuzione aggiornamento app...");
+    try {
+        // 1. Rimuovi Service Worker (Smette di intercettare le richieste)
+        if ('serviceWorker' in navigator) {
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            for (const registration of registrations) {
+                await registration.unregister();
+            }
+        }
+
+        // 2. Pulisci Cache Storage (Elimina i file vecchi salvati)
+        if ('caches' in window) {
+            const keys = await caches.keys();
+            await Promise.all(keys.map(key => caches.delete(key)));
+        }
+
+        // 3. Ricarica la pagina (Forza il browser a riscaricare tutto)
+        window.location.reload();
+    } catch (error) {
+        console.error("Errore durante l'aggiornamento:", error);
+        // Non mostriamo alert bloccanti nel flusso automatico, ma logghiamo
+        throw error; // Rilancia per permettere la gestione errori nelle chiamate manuali
+    }
+}
+
+// --- Controllo Aggiornamento Settimanale ---
+function checkWeeklyUpdate() {
+    // Evita aggiornamenti se offline per non rompere la PWA
+    if (!navigator.onLine) return;
+
+    // Calcolo numero settimana ISO 8601
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() + 3 - (d.getDay() + 6) % 7); // Imposta al Giovedì corrente
+    const week1 = new Date(d.getFullYear(), 0, 4);
+    const weekNumber = 1 + Math.round(((d.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+    
+    const currentWeekKey = `${d.getFullYear()}-W${weekNumber}`;
+    const lastUpdateKey = localStorage.getItem('lastAutoUpdateWeek');
+
+    if (lastUpdateKey !== currentWeekKey) {
+        console.log(`Nuova settimana (${currentWeekKey}). Eseguo aggiornamento automatico...`);
+        localStorage.setItem('lastAutoUpdateWeek', currentWeekKey);
+        performAppUpdate();
+    }
+}

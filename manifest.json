@@ -1,7 +1,7 @@
 {
-  "name": "GymBook",
-  "short_name": "GymBook",
-  "description": "GymBook - Diario di Allenamento",
+  "name": "one percent",
+  "short_name": "one percent",
+  "description": "one percent - Diario di Allenamento",
   "start_url": "index.html",
   "scope": "./",
   "display": "standalone",

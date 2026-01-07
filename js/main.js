@@ -78,6 +78,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Applica il tema salvato all'avvio (funzione in utils.js)
     if (typeof applyTheme === 'function') applyTheme();
 
+    // --- Controllo Aggiornamento Settimanale ---
+    if (typeof checkWeeklyUpdate === 'function') checkWeeklyUpdate();
+
     // --- Inizializzazione Gestore Allenamento Globale ---
     // SPOSTATO QUI (Prima del setup pagine) per garantire che sia pronto all'uso
     try {
@@ -192,7 +195,7 @@ function initGlobalWorkoutManager() {
             if ('mediaSession' in navigator) {
                 navigator.mediaSession.metadata = new MediaMetadata({
                     title: "Allenamento in Corso",
-                    artist: "GymBook",
+                    artist: "one percent",
                     album: "Timer Attivo",
                     artwork: [{ src: 'icon-browser.png', sizes: '192x192', type: 'image/png' }]
                 });
@@ -321,7 +324,8 @@ function updateGlobalNotification() {
         navigator.serviceWorker.ready.then(registration => {
             registration.showNotification(title, {
                 body: body,
-                icon: 'icon-browser.png',
+                icon: 'icon-notification.png',
+                badge: 'icon-notification.png',
                 tag: 'gymbook-active-workout',
                 renotify: shouldRenotify, // True solo all'avvio, False per gli aggiornamenti
                 silent: true,

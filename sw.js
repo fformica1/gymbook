@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gymbook-v1.16.1';
+const CACHE_NAME = 'onepercent-v1.17';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -24,7 +24,8 @@ const ASSETS_TO_CACHE = [
   './manifest.json',
   './icon.png',
   './icon-browser.png',
-  './notification.mp3'
+  './notification.mp3',
+  './icon-notification.png'
 ];
 
 // Installazione: scarica e salva i file nella cache

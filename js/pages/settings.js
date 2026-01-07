@@ -21,22 +21,7 @@ window.setupImpostazioniPage = function() {
                 btnUpdate.disabled = true;
 
                 try {
-                    // 1. Rimuovi Service Worker (Smette di intercettare le richieste)
-                    if ('serviceWorker' in navigator) {
-                        const registrations = await navigator.serviceWorker.getRegistrations();
-                        for (const registration of registrations) {
-                            await registration.unregister();
-                        }
-                    }
-
-                    // 2. Pulisci Cache Storage (Elimina i file vecchi salvati)
-                    if ('caches' in window) {
-                        const keys = await caches.keys();
-                        await Promise.all(keys.map(key => caches.delete(key)));
-                    }
-
-                    // 3. Ricarica la pagina (Forza il browser a riscaricare tutto)
-                    window.location.reload();
+                    await performAppUpdate();
                 } catch (error) {
                     console.error("Errore durante l'aggiornamento:", error);
                     showConfirmModal("Errore", "Errore durante l'aggiornamento. Riprova.", () => {});

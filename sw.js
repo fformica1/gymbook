@@ -1,4 +1,4 @@
-const CACHE_NAME = 'onepercent-v1.17.8';
+const CACHE_NAME = 'onepercent-v1.17.10';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -86,6 +86,22 @@ self.addEventListener('activate', (event) => {
 
 // Attivazione e recupero: serve i file dalla cache se offline
 self.addEventListener('fetch', (event) => {
+  // Gestione Cache Dinamica per Google Fonts
+  // Salva i font nella cache al primo caricamento per renderli disponibili offline
+  if (event.request.url.includes('fonts.googleapis.com') || event.request.url.includes('fonts.gstatic.com')) {
+    event.respondWith(
+      caches.open(CACHE_NAME).then((cache) => {
+        return cache.match(event.request).then((response) => {
+          return response || fetch(event.request).then((networkResponse) => {
+            cache.put(event.request, networkResponse.clone());
+            return networkResponse;
+          });
+        });
+      })
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request, { ignoreSearch: true })
       .then((response) => {

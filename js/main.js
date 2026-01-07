@@ -78,8 +78,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Applica il tema salvato all'avvio (funzione in utils.js)
     if (typeof applyTheme === 'function') applyTheme();
 
-    // --- Controllo Aggiornamento Settimanale ---
-    if (typeof checkWeeklyUpdate === 'function') checkWeeklyUpdate();
+    // --- Controllo Aggiornamento Giornaliero ---
+    if (typeof checkDailyUpdate === 'function') checkDailyUpdate();
 
     // --- Controllo Promemoria Backup Mensile ---
     if (typeof checkBackupReminder === 'function' && checkBackupReminder()) {
@@ -91,7 +91,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     "Backup Consigliato", 
                     "È passato un mese dall'ultimo backup.<br>Vuoi salvare i tuoi dati ora per sicurezza?", 
                     () => { performBackup(); },
-                    "btn-avvia" // Usa lo stile verde/blu (positivo)
+                    "btn-avvia", // Usa lo stile verde/blu (positivo)
+                    () => { // onCancel: Salta per questo mese
+                        const d = new Date();
+                        const currentMonthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                        localStorage.setItem('lastBackupSkippedMonth', currentMonthKey);
+                    }
                 );
             }, 1500); // Ritardo per non disturbare l'avvio
         }
@@ -110,6 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
     switch (currentPage) {
         case 'home':
             if (window.setupHomePage) window.setupHomePage();
+            initWelcomeModal();
             break;
         case 'piani':
             if (window.setupPianiPage) window.setupPianiPage();
@@ -353,6 +359,57 @@ function updateGlobalNotification() {
                 ongoing: true,
                 data: { url: 'allenamento.html?pianoId=' + activeWorkout.pianoId + '&routineId=' + activeWorkout.routineId }
             });
+        });
+    }
+}
+
+function initWelcomeModal() {
+    const modal = document.getElementById('welcome-modal');
+    if (!modal) return;
+
+    // Se l'utente ha già visto il modal, non fare nulla
+    if (localStorage.getItem('welcomeModalSeen') === 'true') {
+        return;
+    }
+
+    // Mostra il modal
+    modal.style.display = 'flex';
+
+    const btnInstall = document.getElementById('btn-install-welcome');
+    const btnClose = document.getElementById('btn-close-welcome');
+
+    // Funzione per aggiornare la visibilità del tasto installa
+    const updateInstallBtnVisibility = () => {
+        if (window.deferredInstallPrompt) {
+            btnInstall.style.display = 'block';
+        } else {
+            btnInstall.style.display = 'none';
+        }
+    };
+
+    // Collega la funzione all'hook globale (chiamato dall'evento beforeinstallprompt)
+    window.updateInstallButton = updateInstallBtnVisibility;
+    
+    // Controllo iniziale
+    updateInstallBtnVisibility();
+
+    // Gestione click Installa
+    if (btnInstall) {
+        btnInstall.addEventListener('click', async () => {
+            if (window.deferredInstallPrompt) {
+                window.deferredInstallPrompt.prompt();
+                const { outcome } = await window.deferredInstallPrompt.userChoice;
+                window.deferredInstallPrompt = null;
+                updateInstallBtnVisibility();
+            }
+        });
+    }
+
+    // Gestione click Chiudi (Salva che è stato visto)
+    if (btnClose) {
+        btnClose.addEventListener('click', () => {
+            localStorage.setItem('welcomeModalSeen', 'true');
+            modal.style.display = 'none';
         });
     }
 }

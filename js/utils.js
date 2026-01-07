@@ -56,18 +56,32 @@ function playNotificationSound() {
 }
 
 // --- Funzione Modale di Conferma Personalizzato ---
-function showConfirmModal(title, message, onConfirm, confirmBtnClass = 'btn-elimina') {
-    const modal = document.getElementById('confirmation-modal');
+function showConfirmModal(title, message, onConfirm, confirmBtnClass = 'btn-elimina', onCancel = null) {
+    let modal = document.getElementById('confirmation-modal');
+
+    // FIX: Se il modale non esiste nel DOM, crealo dinamicamente per evitare il fallback al popup di sistema
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'confirmation-modal';
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <h3 id="confirm-title"></h3>
+                <p id="confirm-message"></p>
+                <div class="modal-actions">
+                    <button id="btn-confirm-cancel" class="btn-grigio">Annulla</button>
+                    <button id="btn-confirm-ok" class="">Conferma</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+
     const titleEl = document.getElementById('confirm-title');
     const messageEl = document.getElementById('confirm-message');
     const btnOk = document.getElementById('btn-confirm-ok');
     const btnCancel = document.getElementById('btn-confirm-cancel');
 
-    if (!modal || !titleEl || !messageEl || !btnOk || !btnCancel) {
-        // Fallback se il modale non è presente nell'HTML
-        if (confirm(message)) onConfirm();
-        return;
-    }
 
     titleEl.textContent = title;
     messageEl.innerHTML = message; // Usa innerHTML per permettere <br>
@@ -90,8 +104,13 @@ function showConfirmModal(title, message, onConfirm, confirmBtnClass = 'btn-elim
         onConfirm();
     });
 
-    btnCancel.onclick = () => modal.style.display = 'none';
-    window.onclick = (e) => { if (e.target == modal) modal.style.display = 'none'; };
+    const handleCancel = () => {
+        modal.style.display = 'none';
+        if (onCancel) onCancel();
+    };
+
+    btnCancel.onclick = handleCancel;
+    window.onclick = (e) => { if (e.target == modal) handleCancel(); };
 }
 
 // --- Funzione Animazione Titolo Header (Marquee) ---
@@ -245,25 +264,32 @@ async function performAppUpdate() {
     }
 }
 
-// --- Controllo Aggiornamento Settimanale ---
-function checkWeeklyUpdate() {
+// --- Controllo Aggiornamento Giornaliero (Safe) ---
+async function checkDailyUpdate() {
     // Evita aggiornamenti se offline per non rompere la PWA
     if (!navigator.onLine) return;
 
-    // Calcolo numero settimana ISO 8601
-    const d = new Date();
-    d.setHours(0, 0, 0, 0);
-    d.setDate(d.getDate() + 3 - (d.getDay() + 6) % 7); // Imposta al Giovedì corrente
-    const week1 = new Date(d.getFullYear(), 0, 4);
-    const weekNumber = 1 + Math.round(((d.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
-    
-    const currentWeekKey = `${d.getFullYear()}-W${weekNumber}`;
-    const lastUpdateKey = localStorage.getItem('lastAutoUpdateWeek');
+    const today = new Date().toISOString().split('T')[0];
+    const lastUpdate = localStorage.getItem('lastAutoUpdateDate');
 
-    if (lastUpdateKey !== currentWeekKey) {
-        console.log(`Nuova settimana (${currentWeekKey}). Eseguo aggiornamento automatico...`);
-        localStorage.setItem('lastAutoUpdateWeek', currentWeekKey);
-        performAppUpdate();
+    if (lastUpdate !== today) {
+        console.log("Controllo connessione per aggiornamento giornaliero...");
+        try {
+            // Verifica connessione reale con timeout breve (3s) per evitare blocchi su reti lente
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 3000);
+            
+            const response = await fetch('./manifest.json?cb=' + Date.now(), { method: 'HEAD', signal: controller.signal, cache: 'no-store' });
+            clearTimeout(timeoutId);
+
+            if (response.ok) {
+                console.log("Connessione stabile. Eseguo aggiornamento...");
+                localStorage.setItem('lastAutoUpdateDate', today);
+                performAppUpdate();
+            }
+        } catch (e) {
+            console.log("Connessione instabile. Salto aggiornamento.", e);
+        }
     }
 }
 
@@ -350,6 +376,10 @@ function checkBackupReminder() {
     const d = new Date();
     const currentMonthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
     const lastBackup = localStorage.getItem('lastBackupMonth');
+    const lastSkipped = localStorage.getItem('lastBackupSkippedMonth');
     
-    return lastBackup !== currentMonthKey;
+    if (lastBackup === currentMonthKey) return false;
+    if (lastSkipped === currentMonthKey) return false;
+    
+    return true;
 }

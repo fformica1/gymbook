@@ -103,16 +103,17 @@
 .timer-display {
     font-size: 45px;
     font-weight: 800;
-    margin-right: 20px; /* Spazio a destra, dato che è a sinistra */
+    margin-right: 10px; /* Spazio a destra, dato che è a sinistra */
     line-height: 1;
     font-variant-numeric: tabular-nums;
-    min-width: 140px; /* Larghezza fissa per evitare spostamenti */
-    text-align: center;
+    width: 150px; /* Larghezza fissa e bloccata */
+    flex-shrink: 0;
+    text-align: left;
 }
 
 .timer-controls {
     display: flex; /* Già presente, ma lo esplicito per chiarezza */
-    gap: 8px;
+    gap: 5px;
     flex-grow: 1; /* Fa sì che i pulsanti occupino lo spazio a destra */
 }
 

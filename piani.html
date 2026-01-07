@@ -10,9 +10,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/global.css?v=1.17.4">
-    <link rel="stylesheet" href="css/components.css?v=1.17.4">
+    <link rel="stylesheet" href="css/global.css?v=1.17.6">
+    <link rel="stylesheet" href="css/components.css?v=1.17.6">
     <style>
+        html { font-size: 15px; } /* Riduzione globale del font */
         body, h1, h2, h3, h4, h5, h6, p, span, div, a, button, input, textarea, select, label, li { font-family: 'Poppins', sans-serif !important; }
     </style>
 </head>
@@ -75,11 +76,11 @@
     <!-- Modal Prompt Generico (Modifica Nome) -->
     <div id="prompt-modal" class="modal">
         <div class="modal-content">
+            <span class="close-modal">&times;</span>
             <h3 id="prompt-title">Modifica</h3>
             <label id="prompt-message" for="prompt-input">Inserisci il nuovo nome:</label>
             <textarea id="prompt-input" class="auto-expand" rows="1" style="width: 100%; margin-bottom: 20px;"></textarea>
             <div class="modal-actions">
-                <button id="btn-prompt-cancel" class="btn-grigio">Annulla</button>
                 <button id="btn-prompt-ok" class="btn-modal-confirm">Salva</button>
             </div>
         </div>
@@ -100,8 +101,8 @@
         </a>
     </nav>
 
-    <script src="js/utils.js?v=1.17.4"></script>
-    <script src="js/pages/plans.js?v=1.17.4"></script>
-    <script src="js/main.js?v=1.17.4"></script>
+    <script src="js/utils.js?v=1.17.6"></script>
+    <script src="js/pages/plans.js?v=1.17.6"></script>
+    <script src="js/main.js?v=1.17.6"></script>
 </body>
 </html>

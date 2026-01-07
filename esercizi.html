@@ -10,9 +10,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/global.css?v=1.17.4">
-    <link rel="stylesheet" href="css/components.css?v=1.17.4">
+    <link rel="stylesheet" href="css/global.css?v=1.17.6">
+    <link rel="stylesheet" href="css/components.css?v=1.17.6">
     <style>
+        html { font-size: 15px; } /* Riduzione globale del font */
         body, h1, h2, h3, h4, h5, h6, p, span, div, a, button, input, textarea, select, label, li { font-family: 'Poppins', sans-serif !important; }
     </style>
 </head>
@@ -90,7 +91,7 @@
             <form id="form-modifica-esercizio">
                 <input type="hidden" id="edit-esercizio-id">
                 <label for="edit-nome-esercizio">Nome Esercizio:</label>
-                <input type="text" id="edit-nome-esercizio" required>
+                <textarea id="edit-nome-esercizio" required rows="1" style="width: 100%; resize: none; overflow: hidden; font-family: inherit; font-size: 16px; padding: 10px; border: 1px solid var(--border-light); border-radius: 8px; background-color: var(--card-bg); color: var(--text); margin-bottom: 15px;"></textarea>
 
                 <label for="edit-gruppo-muscolare">Gruppo Muscolare:</label>
                 <select id="edit-gruppo-muscolare">
@@ -139,8 +140,32 @@
         </a>
     </nav>
 
-    <script src="js/utils.js?v=1.17.4"></script>
-    <script src="js/pages/exercises.js?v=1.17.4"></script>
-    <script src="js/main.js?v=1.17.4"></script>
+    <script src="js/utils.js?v=1.17.6"></script>
+    <script src="js/pages/exercises.js?v=1.17.6"></script>
+    <script src="js/main.js?v=1.17.6"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const editNameTextarea = document.getElementById('edit-nome-esercizio');
+            const editModal = document.getElementById('edit-exercise-modal');
+            
+            if (editNameTextarea && editModal) {
+                const autoExpand = () => {
+                    editNameTextarea.style.height = 'auto';
+                    editNameTextarea.style.height = editNameTextarea.scrollHeight + 'px';
+                };
+                
+                editNameTextarea.addEventListener('input', autoExpand);
+                
+                const observer = new MutationObserver((mutations) => {
+                    mutations.forEach((mutation) => {
+                        if (mutation.attributeName === 'style' && editModal.style.display !== 'none') {
+                            setTimeout(autoExpand, 50);
+                        }
+                    });
+                });
+                observer.observe(editModal, { attributes: true });
+            }
+        });
+    </script>
 </body>
 </html>

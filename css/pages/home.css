@@ -123,6 +123,8 @@
     margin-right: 20px;
     line-height: 1;
     font-variant-numeric: tabular-nums;
+    min-width: 140px; /* Larghezza fissa per evitare spostamenti */
+    text-align: center;
 }
 
 /* I controlli prendono tutto lo spazio rimanente a sinistra */

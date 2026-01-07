@@ -135,9 +135,8 @@ function showPromptModal(title, message, defaultValue, onConfirm) {
     const messageEl = document.getElementById('prompt-message');
     const inputEl = document.getElementById('prompt-input'); // This is a textarea
     const btnOk = document.getElementById('btn-prompt-ok');
-    const btnCancel = document.getElementById('btn-prompt-cancel');
 
-    if (!modal || !titleEl || !messageEl || !inputEl || !btnOk || !btnCancel) {
+    if (!modal || !titleEl || !messageEl || !inputEl || !btnOk) {
         // Fallback se il modale non è presente nell'HTML
         const result = prompt(message, defaultValue);
         if (result !== null) onConfirm(result);
@@ -187,7 +186,10 @@ function showPromptModal(title, message, defaultValue, onConfirm) {
         inputEl.style.height = ''; // Reset height
     };
     
-    btnCancel.onclick = closeModal;
+    const closeBtn = modal.querySelector('.close-modal');
+    if (closeBtn) {
+        closeBtn.onclick = closeModal;
+    }
     window.onclick = (e) => { 
         if (e.target == modal) {
             closeModal();

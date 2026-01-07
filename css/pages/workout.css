@@ -77,6 +77,9 @@
     padding: 8px 12px;
     font-size: 14px;
     flex-shrink: 0; /* Impedisce al pulsante di restringersi */
+    white-space: nowrap; /* Evita che il testo vada a capo */
+    min-width: 70px; /* Larghezza minima per evitare il cambio dimensione tra AVVIA e FINE */
+    text-align: center;
 }
 
 .btn-avvia {
@@ -103,6 +106,8 @@
     margin-right: 20px; /* Spazio a destra, dato che è a sinistra */
     line-height: 1;
     font-variant-numeric: tabular-nums;
+    min-width: 140px; /* Larghezza fissa per evitare spostamenti */
+    text-align: center;
 }
 
 .timer-controls {
@@ -115,8 +120,9 @@
 .timer-controls button {
     flex: 1;
     padding: 12px 0;
-    font-size: 15px;
+    font-size: 14px; /* Ridotto per coerenza e spazio */
     height: 100%;
+    white-space: nowrap; /* Evita che il testo vada a capo */
 }
 
 .recovery-timer.timer-finished {
@@ -270,9 +276,6 @@ input[type="number"].recovery-input {
     min-width: 0;
     overflow: hidden;
     cursor: pointer;
-    text-decoration: underline;
-    text-decoration-style: dotted;
-    text-underline-offset: 4px;
 }
 
 .set-inputs {

@@ -195,7 +195,7 @@ function initGlobalWorkoutManager() {
             if ('mediaSession' in navigator) {
                 navigator.mediaSession.metadata = new MediaMetadata({
                     title: "Allenamento in Corso",
-                    artist: "one percent",
+                    artist: "OnePercent",
                     album: "Timer Attivo",
                     artwork: [{ src: 'icon-browser.png', sizes: '192x192', type: 'image/png' }]
                 });
@@ -321,6 +321,11 @@ function updateGlobalNotification() {
 
     // Invia Notifica
     if ('serviceWorker' in navigator) {
+        // Tentativo: Pulisci il badge dell'icona app (pallino/contatore) se supportato
+        if ('clearAppBadge' in navigator) {
+            navigator.clearAppBadge().catch(() => {});
+        }
+
         navigator.serviceWorker.ready.then(registration => {
             registration.showNotification(title, {
                 body: body,

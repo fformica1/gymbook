@@ -83,13 +83,12 @@ window.setupImpostazioniPage = function() {
                 showConfirmModal("Ripristino Dati", "ATTENZIONE: Questa operazione sovrascriverà TUTTI i dati attuali con quelli del backup.<br><br>Vuoi procedere?", async () => {
                     try {
                         await importBackup(file);
-                        alert("Ripristino completato con successo! L'app verrà ricaricata.");
                         window.location.reload();
                     } catch (err) {
                         console.error(err);
-                        alert("Errore durante il ripristino: " + err.message);
+                        showConfirmModal("Errore", "Errore durante il ripristino: " + err.message, () => {});
                     }
-                });
+                }, 'btn-modal-confirm');
             }
         });
     }

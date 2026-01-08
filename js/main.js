@@ -98,16 +98,16 @@ document.addEventListener('DOMContentLoaded', () => {
             sessionStorage.setItem('backupReminderShown', 'true');
             setTimeout(() => {
                 showConfirmModal(
-                    "Backup Consigliato", 
-                    "È passato un mese dall'ultimo backup.<br>Vuoi salvare i tuoi dati ora per sicurezza?", 
+                    "Backup", 
+                    "È passato un mese dall'ultimo backup.<br>Vuoi eseguirlo ora?", 
                     () => { performBackup(); },
-                    "btn-avvia", // Usa lo stile verde/blu (positivo)
+                    "btn-modal-confirm", // Usa lo stile verde di salvataggio
                     () => { // onCancel: Salta per questo mese
                         const d = new Date();
                         const currentMonthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
                         localStorage.setItem('lastBackupSkippedMonth', currentMonthKey);
                     },
-                    "Esegui Backup"
+                    "Esegui"
                 );
             }, 1500); // Ritardo per non disturbare l'avvio
         }

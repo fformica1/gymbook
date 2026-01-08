@@ -3,55 +3,6 @@ window.setupEserciziPage = function() {
     const listaEserciziDiv = document.querySelector('#lista-esercizi');
     const filterSelect = document.querySelector('#filter-gruppo');
     
-    // --- Inizializzazione Esercizi Default (Se lista vuota) ---
-    const currentExercises = getFromLocalStorage('elencoEsercizi');
-    if (!currentExercises || currentExercises.length === 0) {
-        const defaultExercises = [
-            { id: 'def_1', nome: 'Panca Piana', gruppo: 'petto' },
-            { id: 'def_2', nome: 'Panca Inclinata', gruppo: 'petto' },
-            { id: 'def_3', nome: 'Croci ai Cavi', gruppo: 'petto' },
-            { id: 'def_4', nome: 'Dip', gruppo: 'petto' },
-            { id: 'def_5', nome: 'Trazioni', gruppo: 'dorso' },
-            { id: 'def_6', nome: 'Rematore con Bilanciere', gruppo: 'dorso' },
-            { id: 'def_7', nome: 'Lat Machine', gruppo: 'dorso' },
-            { id: 'def_8', nome: 'Pulley', gruppo: 'dorso' },
-            { id: 'def_9', nome: 'Squat', gruppo: 'quadricipiti' },
-            { id: 'def_10', nome: 'Leg Press', gruppo: 'quadricipiti' },
-            { id: 'def_11', nome: 'Affondi', gruppo: 'quadricipiti' },
-            { id: 'def_12', nome: 'Leg Extension', gruppo: 'quadricipiti' },
-            { id: 'def_13', nome: 'Stacco da Terra', gruppo: 'dorso' },
-            { id: 'def_14', nome: 'Leg Curl', gruppo: 'femorali' },
-            { id: 'def_15', nome: 'Stacchi Rumeni', gruppo: 'femorali' },
-            { id: 'def_16', nome: 'Military Press', gruppo: 'spalle' },
-            { id: 'def_17', nome: 'Alzate Laterali', gruppo: 'spalle' },
-            { id: 'def_18', nome: 'Alzate Posteriori', gruppo: 'spalle' },
-            { id: 'def_19', nome: 'Face Pull', gruppo: 'spalle' },
-            { id: 'def_20', nome: 'Curl con Bilanciere', gruppo: 'bicipiti' },
-            { id: 'def_21', nome: 'Curl con Manubri', gruppo: 'bicipiti' },
-            { id: 'def_22', nome: 'Curl Hammer', gruppo: 'bicipiti' },
-            { id: 'def_23', nome: 'Pushdown', gruppo: 'tricipiti' },
-            { id: 'def_24', nome: 'French Press', gruppo: 'tricipiti' },
-            { id: 'def_25', nome: 'Overhead Extention', gruppo: 'tricipiti' },
-            { id: 'def_26', nome: 'Calf Raise in Piedi', gruppo: 'polpacci' },
-            { id: 'def_27', nome: 'Calf Raise Seduto', gruppo: 'polpacci' },
-            { id: 'def_28', nome: 'Crunch', gruppo: 'core' },
-            { id: 'def_29', nome: 'Plank', gruppo: 'core' },
-            { id: 'def_30', nome: 'Leg Raise', gruppo: 'core' },
-            { id: 'def_31', nome: 'T-Bar', gruppo: 'dorso' },
-            { id: 'def_32', nome: 'Spinte Panca Piana', gruppo: 'petto' },
-            { id: 'def_33', nome: 'Spinte Panca Inclinata', gruppo: 'petto' },
-            { id: 'def_34', nome: 'Chest Press', gruppo: 'petto' },
-            { id: 'def_35', nome: 'Lento Avanti', gruppo: 'spalle' },
-            { id: 'def_36', nome: 'Shoulder Press', gruppo: 'spalle' },
-            { id: 'def_37', nome: 'Hip Thrust', gruppo: 'glutei' },
-            { id: 'def_38', nome: 'Glute Bridge', gruppo: 'glutei' },
-            { id: 'def_39', nome: 'Slanci ai Cavi', gruppo: 'glutei' },
-            { id: 'def_40', nome: 'Abductor Machine', gruppo: 'glutei' },
-            { id: 'def_41', nome: 'Step Up', gruppo: 'glutei' }
-        ];
-        saveToLocalStorage('elencoEsercizi', defaultExercises);
-    }
-
     // --- Gestione Parametri URL e Stato ---
     const params = new URLSearchParams(window.location.search);
     const selectionMode = params.get('mode') === 'selection';

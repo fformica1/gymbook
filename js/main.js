@@ -1,5 +1,15 @@
 // js/main.js - Router principale e inizializzazione
 
+// Variabile globale per gestire l'installazione PWA
+window.deferredInstallPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault(); // Previene il banner automatico standard
+    window.deferredInstallPrompt = e;
+    console.log("Evento installazione catturato");
+    if (window.updateInstallButton) window.updateInstallButton();
+});
+
 document.addEventListener('DOMContentLoaded', () => {
     console.log("DOM completamente caricato. Inizializzo l'applicazione (Nuova Struttura).");
 
@@ -96,11 +106,15 @@ document.addEventListener('DOMContentLoaded', () => {
                         const d = new Date();
                         const currentMonthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
                         localStorage.setItem('lastBackupSkippedMonth', currentMonthKey);
-                    }
+                    },
+                    "Esegui Backup"
                 );
             }, 1500); // Ritardo per non disturbare l'avvio
         }
     }
+
+    // --- Inizializzazione Dati di Default (Primo Avvio) ---
+    initializeDefaultData();
 
     // --- Inizializzazione Gestore Allenamento Globale ---
     // SPOSTATO QUI (Prima del setup pagine) per garantire che sia pronto all'uso
@@ -115,7 +129,6 @@ document.addEventListener('DOMContentLoaded', () => {
     switch (currentPage) {
         case 'home':
             if (window.setupHomePage) window.setupHomePage();
-            initWelcomeModal();
             break;
         case 'piani':
             if (window.setupPianiPage) window.setupPianiPage();
@@ -363,54 +376,141 @@ function updateGlobalNotification() {
     }
 }
 
-function initWelcomeModal() {
-    const modal = document.getElementById('welcome-modal');
-    if (!modal) return;
+function initializeDefaultData() {
+    // 1. Esercizi Preimpostati (Se la lista è vuota)
+    // Usiamo 'elencoEsercizi' per coerenza con la pagina esercizi
+    if (!localStorage.getItem('elencoEsercizi')) {
+        const defaultExercises = [
+            // Petto
+            { id: 'def_chest_1', nome: 'Chest Press', gruppo: 'petto' },
+            { id: 'def_chest_2', nome: 'Croci ai Cavi', gruppo: 'petto' },
+            { id: 'def_chest_3', nome: 'Croci ai Cavi Bassi', gruppo: 'petto' },
+            { id: 'def_chest_4', nome: 'Croci su Panca', gruppo: 'petto' },
+            { id: 'def_chest_5', nome: 'Dip', gruppo: 'petto' },
+            { id: 'def_chest_6', nome: 'Panca Inclinata', gruppo: 'petto' },
+            { id: 'def_chest_7', nome: 'Panca Inclinata con Manubri', gruppo: 'petto' },
+            { id: 'def_chest_8', nome: 'Panca Inclinata Multipower', gruppo: 'petto' },
+            { id: 'def_chest_9', nome: 'Panca Piana', gruppo: 'petto' },
+            { id: 'def_chest_10', nome: 'Panca Piana con Manubri', gruppo: 'petto' },
+            { id: 'def_chest_11', nome: 'Panca Piana Multipower', gruppo: 'petto' },
+            { id: 'def_chest_12', nome: 'Pec Fly', gruppo: 'petto' },
+            { id: 'def_chest_13', nome: 'Push Up', gruppo: 'petto' },
 
-    // Se l'utente ha già visto il modal, non fare nulla
-    if (localStorage.getItem('welcomeModalSeen') === 'true') {
-        return;
+            // Dorso
+            { id: 'def_back_1', nome: 'Lat Machine', gruppo: 'dorso' },
+            { id: 'def_back_2', nome: 'Lat Pull Down', gruppo: 'dorso' },
+            { id: 'def_back_3', nome: 'Pull Down', gruppo: 'dorso' },
+            { id: 'def_back_4', nome: 'Pulley', gruppo: 'dorso' },
+            { id: 'def_back_5', nome: 'Rematore con Bilanciere', gruppo: 'dorso' },
+            { id: 'def_back_6', nome: 'Rematore con Manubri', gruppo: 'dorso' },
+            { id: 'def_back_7', nome: 'Row Machine', gruppo: 'dorso' },
+            { id: 'def_back_8', nome: 'T-Bar', gruppo: 'dorso' },
+            { id: 'def_back_9', nome: 'Trazioni', gruppo: 'dorso' },
+            { id: 'def_back_10', nome: 'Stacco da Terra', gruppo: 'dorso' },
+            { id: 'def_back_11', nome: 'Iperestensioni', gruppo: 'dorso' }, // Aggiunto per la scheda
+
+            // Spalle
+            { id: 'def_sh_1', nome: 'Alzate Frontali', gruppo: 'spalle' },
+            { id: 'def_sh_2', nome: 'Alzate Laterali', gruppo: 'spalle' },
+            { id: 'def_sh_3', nome: 'Alzate Laterali al Cavo', gruppo: 'spalle' },
+            { id: 'def_sh_4', nome: 'Lento Avanti con Manubri', gruppo: 'spalle' },
+            { id: 'def_sh_5', nome: 'Military Press', gruppo: 'spalle' },
+            { id: 'def_sh_6', nome: 'Shoulder Press', gruppo: 'spalle' },
+            { id: 'def_sh_7', nome: 'Scrollate', gruppo: 'spalle' },
+            { id: 'def_sh_8', nome: 'Facepull', gruppo: 'spalle' }, // Aggiunto per la scheda
+
+            // Quadricipiti
+            { id: 'def_quad_1', nome: 'Affondi', gruppo: 'quadricipiti' },
+            { id: 'def_quad_2', nome: 'Leg Extention', gruppo: 'quadricipiti' },
+            { id: 'def_quad_3', nome: 'Leg Press', gruppo: 'quadricipiti' },
+            { id: 'def_quad_4', nome: 'Squat', gruppo: 'quadricipiti' },
+            { id: 'def_quad_5', nome: 'Squat al Multipower', gruppo: 'quadricipiti' },
+            { id: 'def_quad_6', nome: 'Squat Bulgaro', gruppo: 'quadricipiti' },
+
+            // Femorali
+            { id: 'def_fem_1', nome: 'Leg Curl', gruppo: 'femorali' },
+            { id: 'def_fem_2', nome: 'Stacchi Rumeni', gruppo: 'femorali' },
+            { id: 'def_fem_3', nome: 'Good Morning', gruppo: 'femorali' },
+
+            // Polpacci
+            { id: 'def_calv_1', nome: 'Calf Machine', gruppo: 'polpacci' },
+
+            // Bicipiti
+            { id: 'def_bic_1', nome: 'Curl al Cavo', gruppo: 'bicipiti' },
+            { id: 'def_bic_2', nome: 'Curl al Cavo con Corda', gruppo: 'bicipiti' },
+            { id: 'def_bic_3', nome: 'Curl Bilanciere EZ', gruppo: 'bicipiti' },
+            { id: 'def_bic_4', nome: 'Curl con Manubri', gruppo: 'bicipiti' },
+            { id: 'def_bic_5', nome: 'Curl Machine', gruppo: 'bicipiti' },
+            { id: 'def_bic_6', nome: 'Curl a Martello', gruppo: 'bicipiti' },
+
+            // Tricipiti
+            { id: 'def_tri_1', nome: 'Kick Back', gruppo: 'tricipiti' },
+            { id: 'def_tri_2', nome: 'Overhead Extention', gruppo: 'tricipiti' },
+            { id: 'def_tri_3', nome: 'Push Down', gruppo: 'tricipiti' },
+            { id: 'def_tri_4', nome: 'Push Down con Corda', gruppo: 'tricipiti' },
+            { id: 'def_tri_5', nome: 'Push Down con Triangolo', gruppo: 'tricipiti' },
+
+            // Core
+            { id: 'def_core_1', nome: 'Addominali', gruppo: 'core' }
+        ];
+        localStorage.setItem('elencoEsercizi', JSON.stringify(defaultExercises));
+        console.log("Esercizi di default inizializzati.");
     }
 
-    // Mostra il modal
-    modal.style.display = 'flex';
-
-    const btnInstall = document.getElementById('btn-install-welcome');
-    const btnClose = document.getElementById('btn-close-welcome');
-
-    // Funzione per aggiornare la visibilità del tasto installa
-    const updateInstallBtnVisibility = () => {
-        if (window.deferredInstallPrompt) {
-            btnInstall.style.display = 'block';
-        } else {
-            btnInstall.style.display = 'none';
-        }
-    };
-
-    // Collega la funzione all'hook globale (chiamato dall'evento beforeinstallprompt)
-    window.updateInstallButton = updateInstallBtnVisibility;
-    
-    // Controllo iniziale
-    updateInstallBtnVisibility();
-
-    // Gestione click Installa
-    if (btnInstall) {
-        btnInstall.addEventListener('click', async () => {
-            if (window.deferredInstallPrompt) {
-                window.deferredInstallPrompt.prompt();
-                const { outcome } = await window.deferredInstallPrompt.userChoice;
-                window.deferredInstallPrompt = null;
-                updateInstallBtnVisibility();
+    // 2. Piano di Allenamento Base (Se non ci sono piani)
+    if (!localStorage.getItem('pianiDiAllenamento')) {
+        const defaultPlan = [
+            {
+                id: 'plan_one_percent',
+                nome: 'Push Pull Legs - OnePercent',
+                routine: [
+                    {
+                        id: 'routine_push',
+                        nome: 'Push',
+                        color: '#FF3B30', // Rosso
+                        esercizi: [
+                            { id: 'inst_1', esercizioId: 'def_chest_9', nome: 'Panca Piana', serie: [{kg: 0, reps: 8, completed: false}, {kg: 0, reps: 8, completed: false}, {kg: 0, reps: 8, completed: false}], recupero: 120, note: 'Bilanciere o Manubri' },
+                            { id: 'inst_2', esercizioId: 'def_sh_5', nome: 'Military Press', serie: [{kg: 0, reps: 10, completed: false}, {kg: 0, reps: 10, completed: false}, {kg: 0, reps: 10, completed: false}], recupero: 90, note: 'Spalle' },
+                            { id: 'inst_3', esercizioId: 'def_chest_7', nome: 'Panca Inclinata con Manubri', serie: [{kg: 0, reps: 12, completed: false}, {kg: 0, reps: 12, completed: false}, {kg: 0, reps: 12, completed: false}], recupero: 90, note: '' },
+                            { id: 'inst_4', esercizioId: 'def_sh_2', nome: 'Alzate Laterali', serie: [{kg: 0, reps: 15, completed: false}, {kg: 0, reps: 15, completed: false}, {kg: 0, reps: 15, completed: false}], recupero: 60, note: '' },
+                            { id: 'inst_5', esercizioId: 'def_chest_5', nome: 'Dip', serie: [{kg: 0, reps: 10, completed: false}, {kg: 0, reps: 10, completed: false}, {kg: 0, reps: 10, completed: false}], recupero: 90, note: 'Parallele (Max Reps)' },
+                            { id: 'inst_6', esercizioId: 'def_tri_3', nome: 'Push Down', serie: [{kg: 0, reps: 12, completed: false}, {kg: 0, reps: 12, completed: false}, {kg: 0, reps: 12, completed: false}], recupero: 60, note: 'Cavo' },
+                            { id: 'inst_7', esercizioId: 'def_core_1', nome: 'Addominali', serie: [{kg: 0, reps: 20, completed: false}, {kg: 0, reps: 20, completed: false}, {kg: 0, reps: 20, completed: false}], recupero: 60, note: 'Crunch' }
+                        ]
+                    },
+                    {
+                        id: 'routine_pull',
+                        nome: 'Pull',
+                        color: '#FF9500', // Arancione
+                        esercizi: [
+                            { id: 'inst_8', esercizioId: 'def_back_1', nome: 'Lat Machine', serie: [{kg: 0, reps: 8, completed: false}, {kg: 0, reps: 8, completed: false}, {kg: 0, reps: 8, completed: false}], recupero: 120, note: 'O Trazioni' },
+                            { id: 'inst_9', esercizioId: 'def_back_6', nome: 'Rematore con Manubri', serie: [{kg: 0, reps: 10, completed: false}, {kg: 0, reps: 10, completed: false}, {kg: 0, reps: 10, completed: false}], recupero: 90, note: 'O Bilanciere' },
+                            { id: 'inst_10', esercizioId: 'def_back_4', nome: 'Pulley', serie: [{kg: 0, reps: 12, completed: false}, {kg: 0, reps: 12, completed: false}, {kg: 0, reps: 12, completed: false}], recupero: 90, note: 'Basso' },
+                            { id: 'inst_11', esercizioId: 'def_sh_8', nome: 'Facepull', serie: [{kg: 0, reps: 15, completed: false}, {kg: 0, reps: 15, completed: false}, {kg: 0, reps: 15, completed: false}], recupero: 60, note: 'Ai Cavi' },
+                            { id: 'inst_12', esercizioId: 'def_bic_3', nome: 'Curl Bilanciere EZ', serie: [{kg: 0, reps: 10, completed: false}, {kg: 0, reps: 10, completed: false}, {kg: 0, reps: 10, completed: false}], recupero: 60, note: '' },
+                            { id: 'inst_13', esercizioId: 'def_bic_6', nome: 'Curl a Martello', serie: [{kg: 0, reps: 12, completed: false}, {kg: 0, reps: 12, completed: false}, {kg: 0, reps: 12, completed: false}], recupero: 60, note: 'Hammer Curl' },
+                            { id: 'inst_14', esercizioId: 'def_back_11', nome: 'Iperestensioni', serie: [{kg: 0, reps: 15, completed: false}, {kg: 0, reps: 15, completed: false}, {kg: 0, reps: 15, completed: false}], recupero: 60, note: 'Lombari' }
+                        ]
+                    },
+                    {
+                        id: 'routine_legs',
+                        nome: 'Legs',
+                        color: '#FFCC00', // Giallo
+                        esercizi: [
+                            { id: 'inst_15', esercizioId: 'def_quad_4', nome: 'Squat', serie: [{kg: 0, reps: 8, completed: false}, {kg: 0, reps: 8, completed: false}, {kg: 0, reps: 8, completed: false}], recupero: 150, note: 'Con Bilanciere' },
+                            { id: 'inst_16', esercizioId: 'def_quad_3', nome: 'Leg Press', serie: [{kg: 0, reps: 12, completed: false}, {kg: 0, reps: 12, completed: false}, {kg: 0, reps: 12, completed: false}], recupero: 90, note: '' },
+                            { id: 'inst_17', esercizioId: 'def_fem_2', nome: 'Stacchi Rumeni', serie: [{kg: 0, reps: 10, completed: false}, {kg: 0, reps: 10, completed: false}, {kg: 0, reps: 10, completed: false}], recupero: 120, note: '' },
+                            { id: 'inst_18', esercizioId: 'def_quad_2', nome: 'Leg Extention', serie: [{kg: 0, reps: 15, completed: false}, {kg: 0, reps: 15, completed: false}, {kg: 0, reps: 15, completed: false}], recupero: 60, note: '' },
+                            { id: 'inst_19', esercizioId: 'def_fem_1', nome: 'Leg Curl', serie: [{kg: 0, reps: 15, completed: false}, {kg: 0, reps: 15, completed: false}, {kg: 0, reps: 15, completed: false}], recupero: 60, note: '' },
+                            { id: 'inst_20', esercizioId: 'def_calv_1', nome: 'Calf Machine', serie: [{kg: 0, reps: 15, completed: false}, {kg: 0, reps: 15, completed: false}, {kg: 0, reps: 15, completed: false}, {kg: 0, reps: 15, completed: false}], recupero: 60, note: 'Polpacci' },
+                            { id: 'inst_21', esercizioId: 'def_core_1', nome: 'Addominali', serie: [{kg: 0, reps: 60, completed: false}, {kg: 0, reps: 60, completed: false}, {kg: 0, reps: 60, completed: false}], recupero: 60, note: 'Plank (60 secondi)' }
+                        ]
+                    }
+                ]
             }
-        });
-    }
-
-    // Gestione click Chiudi (Salva che è stato visto)
-    if (btnClose) {
-        btnClose.addEventListener('click', () => {
-            localStorage.setItem('welcomeModalSeen', 'true');
-            modal.style.display = 'none';
-        });
+        ];
+        localStorage.setItem('pianiDiAllenamento', JSON.stringify(defaultPlan));
+        console.log("Piano di allenamento base inizializzato.");
     }
 }
 

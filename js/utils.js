@@ -56,7 +56,7 @@ function playNotificationSound() {
 }
 
 // --- Funzione Modale di Conferma Personalizzato ---
-function showConfirmModal(title, message, onConfirm, confirmBtnClass = 'btn-elimina', onCancel = null) {
+function showConfirmModal(title, message, onConfirm, confirmBtnClass = 'btn-elimina', onCancel = null, confirmBtnText = 'Conferma') {
     let modal = document.getElementById('confirmation-modal');
 
     // FIX: Se il modale non esiste nel DOM, crealo dinamicamente per evitare il fallback al popup di sistema
@@ -92,6 +92,7 @@ function showConfirmModal(title, message, onConfirm, confirmBtnClass = 'btn-elim
     btnOk.className = ''; 
     btnOk.classList.add(confirmBtnClass);
     btnCancel.textContent = "Annulla";
+    btnOk.textContent = confirmBtnText;
 
     modal.style.display = 'flex';
 

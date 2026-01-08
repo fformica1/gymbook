@@ -11,6 +11,58 @@ window.setupImpostazioniPage = function() {
         });
     }
 
+    // Gestione Installazione PWA
+    const btnInstall = document.getElementById('btn-install-app');
+    const installContainer = document.getElementById('install-app-container');
+
+    window.updateInstallButton = () => {
+        if (!installContainer) return;
+
+        // 1. Se l'app è già installata (Standalone), nascondi tutto
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+        if (isStandalone) {
+            installContainer.style.display = 'none';
+            return;
+        }
+
+        // 2. Se abbiamo l'evento di installazione (Android/Chrome), mostra il pulsante
+        if (window.deferredInstallPrompt) {
+            installContainer.style.display = 'block';
+            btnInstall.style.display = 'block';
+            const p = installContainer.querySelector('p');
+            if (p) p.textContent = "Aggiungi l'app alla schermata home per usarla offline come un'app nativa.";
+        } 
+        // 3. Altrimenti (iOS o evento non scattato), mostra istruzioni manuali
+        else {
+            installContainer.style.display = 'block';
+            btnInstall.style.display = 'none'; // Nascondi il pulsante perché non funzionerebbe
+            
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            const p = installContainer.querySelector('p');
+            if (p) {
+                if (isIOS) {
+                    p.innerHTML = "Per installare su iOS:<br>1. Premi il tasto <strong>Condividi</strong> (icona centrale in basso)<br>2. Scorri e seleziona <strong>'Aggiungi alla schermata Home'</strong>";
+                } else {
+                    p.innerHTML = "Per installare l'app:<br>Apri il menu del browser (tre puntini) e seleziona <strong>'Installa app'</strong> o <strong>'Aggiungi a schermata Home'</strong>.";
+                }
+                p.style.color = "var(--text)";
+                p.style.lineHeight = "1.5";
+            }
+        }
+    };
+
+    if (btnInstall) {
+        btnInstall.addEventListener('click', async () => {
+            if (window.deferredInstallPrompt) {
+                window.deferredInstallPrompt.prompt();
+                const { outcome } = await window.deferredInstallPrompt.userChoice;
+                window.deferredInstallPrompt = null;
+                window.updateInstallButton();
+            }
+        });
+    }
+    window.updateInstallButton(); // Check iniziale
+
     // Gestione Backup
     const btnBackup = document.getElementById('btn-backup');
     if (btnBackup) {

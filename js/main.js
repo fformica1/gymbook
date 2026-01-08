@@ -507,6 +507,7 @@ function initializeDefaultData() {
             }
         ];
         localStorage.setItem('pianiDiAllenamento', JSON.stringify(defaultPlan));
+        localStorage.setItem('activePianoId', 'plan_one_percent'); // Imposta subito come attivo
         console.log("Piano di allenamento base inizializzato.");
     }
 }

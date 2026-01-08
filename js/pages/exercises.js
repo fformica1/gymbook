@@ -1,7 +1,8 @@
 window.setupEserciziPage = function() {
     console.log("Setup Esercizi Page (Nuova Struttura)");
     const listaEserciziDiv = document.querySelector('#lista-esercizi');
-    const filterSelect = document.querySelector('#filter-gruppo');
+    let currentGroupFilter = '';
+    const searchInput = document.querySelector('#search-exercise');
     
     // --- Gestione Parametri URL e Stato ---
     const params = new URLSearchParams(window.location.search);
@@ -79,11 +80,31 @@ window.setupEserciziPage = function() {
         });
     }
 
-    if (filterSelect) filterSelect.addEventListener('change', renderEsercizi);
+    // Gestione click sui chip di filtro
+    document.querySelectorAll('.filter-chip').forEach(chip => {
+        chip.addEventListener('click', (e) => {
+            document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+            e.target.classList.add('active');
+            currentGroupFilter = e.target.dataset.group;
+            renderEsercizi();
+        });
+    });
+
+    if (searchInput) searchInput.addEventListener('input', renderEsercizi);
 
     if (editModal) {
         editModal.querySelector('.close-modal').addEventListener('click', () => editModal.style.display = 'none');
         window.addEventListener('click', (e) => { if (e.target === editModal) editModal.style.display = 'none'; });
+        
+        // Auto-expand per la textarea di modifica
+        const editNameTextarea = document.querySelector('#edit-nome-esercizio');
+        if (editNameTextarea) {
+            editNameTextarea.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
+            });
+        }
+
         editForm.addEventListener('submit', (e) => {
             e.preventDefault();
             const id = document.querySelector('#edit-esercizio-id').value;
@@ -129,7 +150,11 @@ window.setupEserciziPage = function() {
         let esercizi = getFromLocalStorage('elencoEsercizi') || [];
         listaEserciziDiv.innerHTML = '';
         esercizi.sort((a, b) => a.nome.localeCompare(b.nome));
-        if (filterSelect && filterSelect.value) esercizi = esercizi.filter(e => e.gruppo === filterSelect.value);
+        if (currentGroupFilter) esercizi = esercizi.filter(e => e.gruppo === currentGroupFilter);
+        if (searchInput && searchInput.value) {
+            const term = searchInput.value.toLowerCase();
+            esercizi = esercizi.filter(e => e.nome.toLowerCase().includes(term));
+        }
 
         if (esercizi.length === 0) { listaEserciziDiv.innerHTML = '<p>Nessun esercizio trovato.</p>'; return; }
 
@@ -151,6 +176,7 @@ window.setupEserciziPage = function() {
                         <span class="exercise-group">${ex.gruppo}</span>
                     </div>
                 </label>
+                ${!selectionMode ? `
                 <div class="item-actions" style="display: flex; align-items: center; gap: 0px; flex-shrink: 0;">
                     <button data-id="${ex.id}" class="btn-icon btn-edit-esercizio" style="background:none; border:none; cursor:pointer; color: var(--accent); padding: 5px;">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:22px; height:22px;"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg>
@@ -158,7 +184,7 @@ window.setupEserciziPage = function() {
                     <button data-id="${ex.id}" class="btn-icon btn-elimina-esercizio" style="background:none; border:none; cursor:pointer; color: var(--danger); padding: 5px;">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:22px; height:22px; pointer-events: none;"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg>
                     </button>
-                </div>
+                </div>` : ''}
             `;
             
             // Gestione Checkbox (solo in selection mode)
@@ -189,19 +215,31 @@ window.setupEserciziPage = function() {
                 });
             }
 
-            div.querySelector('.btn-edit-esercizio').addEventListener('click', () => {
-                document.querySelector('#edit-esercizio-id').value = ex.id;
-                document.querySelector('#edit-nome-esercizio').value = ex.nome;
-                document.querySelector('#edit-gruppo-muscolare').value = ex.gruppo;
-                editModal.style.display = 'flex';
-            });
-            div.querySelector('.btn-elimina-esercizio').addEventListener('click', (e) => {
-                showConfirmModal("Elimina Esercizio", "Sei sicuro di voler eliminare questo esercizio dall'elenco globale?", () => {
-                    let all = getFromLocalStorage('elencoEsercizi');
-                    saveToLocalStorage('elencoEsercizi', all.filter(x => x.id !== ex.id));
-                    renderEsercizi();
+            const btnEdit = div.querySelector('.btn-edit-esercizio');
+            if (btnEdit) {
+                btnEdit.addEventListener('click', () => {
+                    document.querySelector('#edit-esercizio-id').value = ex.id;
+                    const nameInput = document.querySelector('#edit-nome-esercizio');
+                    nameInput.value = ex.nome;
+                    document.querySelector('#edit-gruppo-muscolare').value = ex.gruppo;
+                    editModal.style.display = 'flex';
+                    if (nameInput.tagName === 'TEXTAREA') {
+                        nameInput.style.height = 'auto';
+                        nameInput.style.height = nameInput.scrollHeight + 'px';
+                    }
                 });
-            });
+            }
+
+            const btnDelete = div.querySelector('.btn-elimina-esercizio');
+            if (btnDelete) {
+                btnDelete.addEventListener('click', (e) => {
+                    showConfirmModal("Elimina Esercizio", "Sei sicuro di voler eliminare questo esercizio dall'elenco globale?", () => {
+                        let all = getFromLocalStorage('elencoEsercizi');
+                        saveToLocalStorage('elencoEsercizi', all.filter(x => x.id !== ex.id));
+                        renderEsercizi();
+                    });
+                });
+            }
             listaEserciziDiv.appendChild(div);
             animateTitleIfLong(div.querySelector('.exercise-name'));
         });

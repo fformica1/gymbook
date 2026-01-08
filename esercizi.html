@@ -15,6 +15,38 @@
     <style>
         html { font-size: 15px; } /* Riduzione globale del font */
         body, h1, h2, h3, h4, h5, h6, p, span, div, a, button, input, textarea, select, label, li { font-family: 'Poppins', sans-serif !important; }
+        
+        /* Stili per i filtri a chip (Loghi) */
+        .filters-scroll-container {
+            display: flex;
+            overflow-x: auto;
+            gap: 8px;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .filters-scroll-container::-webkit-scrollbar {
+            display: none;
+        }
+        .filter-chip {
+            padding: 8px 16px;
+            border-radius: 20px;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-light);
+            color: var(--text-dim);
+            font-size: 14px;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+        .filter-chip.active {
+            background-color: var(--accent);
+            color: white;
+            border-color: var(--accent);
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
@@ -35,19 +67,20 @@
     <div class="content-wrapper">
         <section>
             <div style="margin-bottom: 15px;">
-                <select id="filter-gruppo" style="width: 100%; padding: 12px; font-size: 16px; border-radius: 8px; border: 1px solid var(--border-light); background-color: var(--card-bg); color: var(--text-normal);">
-                        <option value="">Tutti i gruppi muscolari</option>
-                        <option value="bicipiti">Bicipiti</option>
-                        <option value="core">Core</option>
-                        <option value="dorso">Dorso</option>
-                        <option value="femorali">Femorali</option>
-                        <option value="glutei">Glutei</option>
-                        <option value="petto">Petto</option>
-                        <option value="polpacci">Polpacci</option>
-                        <option value="quadricipiti">Quadricipiti</option>
-                        <option value="spalle">Spalle</option>
-                        <option value="tricipiti">Tricipiti</option>
-                    </select>
+                <input type="text" id="search-exercise" placeholder="Cerca esercizio..." style="width: 100%; padding: 12px; font-size: 16px; border-radius: 8px; border: 1px solid var(--border-light); background-color: var(--card-bg); color: var(--text-normal); margin-bottom: 10px;">
+                <div class="filters-scroll-container">
+                    <button class="filter-chip active" data-group="">Tutti</button>
+                    <button class="filter-chip" data-group="petto">Petto</button>
+                    <button class="filter-chip" data-group="dorso">Dorso</button>
+                    <button class="filter-chip" data-group="spalle">Spalle</button>
+                    <button class="filter-chip" data-group="bicipiti">Bicipiti</button>
+                    <button class="filter-chip" data-group="tricipiti">Tricipiti</button>
+                    <button class="filter-chip" data-group="quadricipiti">Quadricipiti</button>
+                    <button class="filter-chip" data-group="femorali">Femorali</button>
+                    <button class="filter-chip" data-group="polpacci">Polpacci</button>
+                    <button class="filter-chip" data-group="glutei">Glutei</button>
+                    <button class="filter-chip" data-group="core">Core</button>
+                </div>
             </div>
             <div id="lista-esercizi"></div>
 
@@ -91,7 +124,7 @@
             <form id="form-modifica-esercizio">
                 <input type="hidden" id="edit-esercizio-id">
                 <label for="edit-nome-esercizio">Nome Esercizio:</label>
-                <input type="text" id="edit-nome-esercizio" required>
+                <textarea id="edit-nome-esercizio" required rows="1" style="width: 100%; resize: none; overflow: hidden; font-family: inherit; font-size: 16px; padding: 10px; border: 1px solid var(--border-light); border-radius: 8px; background-color: var(--card-bg); color: var(--text); margin-bottom: 15px;"></textarea>
 
                 <label for="edit-gruppo-muscolare">Gruppo Muscolare:</label>
                 <select id="edit-gruppo-muscolare">

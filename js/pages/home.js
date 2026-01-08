@@ -87,32 +87,6 @@ window.setupHomePage = function() {
             if (activePiano.routine.length > 0) {
                 const storico = getFromLocalStorage('storicoAllenamenti') || [];
 
-                // Palette di colori accesi e ben distinguibili
-                const routineColors = [
-                    '#FF3B30', // Rosso
-                    '#FF9500', // Arancione
-                    '#FFCC00', // Giallo
-                    '#34C759', // Verde
-                    '#5AC8FA', // Azzurro
-                    '#007AFF', // Blu
-                    '#5856D6', // Indaco
-                    '#AF52DE', // Viola
-                    '#ff65a5ff'  // Rosa
-                ];
-
-                // Assegna e salva i colori se mancano (per coerenza futura nel calendario)
-                let colorsUpdated = false;
-                activePiano.routine.forEach((r, index) => {
-                    if (!r.color) {
-                        r.color = routineColors[index % routineColors.length];
-                        colorsUpdated = true;
-                    }
-                });
-
-                if (colorsUpdated) {
-                    saveToLocalStorage('pianiDiAllenamento', piani);
-                }
-
                 activePiano.routine.forEach((r, index) => {
                     const ultimoAllenamento = storico.find(log => log.routineId === r.id);
                     let testoUltimoAllenamento = '';
@@ -131,13 +105,10 @@ window.setupHomePage = function() {
                         else testoUltimoAllenamento = `${diffDays} gg fa`;
                     }
 
-                    const color = r.color; // Usa il colore salvato
-
                     const routineDiv = document.createElement('div');
                     routineDiv.dataset.routineId = r.id;
                     routineDiv.className = 'list-item-container';
                     routineDiv.innerHTML = `
-                        <span class="routine-dot" style="width: 18px; height: 18px; background-color: ${color}; border-radius: 50%; display: inline-block; margin-right: 15px; flex-shrink: 0;"></span>
                         <a href="allenamento.html?pianoId=${activePiano.id}&routineId=${r.id}" class="title-link">
                             <h3>${r.nome}</h3></a>
                         <span class="last-workout-date">${testoUltimoAllenamento}</span>

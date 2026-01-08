@@ -467,7 +467,6 @@ function initializeDefaultData() {
                     {
                         id: 'routine_push',
                         nome: 'Push',
-                        color: '#FF3B30', // Rosso
                         esercizi: [
                             { id: 'inst_1', esercizioId: 'def_chest_9', nome: 'Panca Piana', serie: [{kg: 0, reps: 8, completed: false}, {kg: 0, reps: 8, completed: false}, {kg: 0, reps: 8, completed: false}], recupero: 120, note: 'Bilanciere o Manubri' },
                             { id: 'inst_2', esercizioId: 'def_sh_5', nome: 'Military Press', serie: [{kg: 0, reps: 10, completed: false}, {kg: 0, reps: 10, completed: false}, {kg: 0, reps: 10, completed: false}], recupero: 90, note: 'Spalle' },
@@ -481,7 +480,6 @@ function initializeDefaultData() {
                     {
                         id: 'routine_pull',
                         nome: 'Pull',
-                        color: '#FF9500', // Arancione
                         esercizi: [
                             { id: 'inst_8', esercizioId: 'def_back_1', nome: 'Lat Machine', serie: [{kg: 0, reps: 8, completed: false}, {kg: 0, reps: 8, completed: false}, {kg: 0, reps: 8, completed: false}], recupero: 120, note: 'O Trazioni' },
                             { id: 'inst_9', esercizioId: 'def_back_6', nome: 'Rematore con Manubri', serie: [{kg: 0, reps: 10, completed: false}, {kg: 0, reps: 10, completed: false}, {kg: 0, reps: 10, completed: false}], recupero: 90, note: 'O Bilanciere' },
@@ -495,7 +493,6 @@ function initializeDefaultData() {
                     {
                         id: 'routine_legs',
                         nome: 'Legs',
-                        color: '#FFCC00', // Giallo
                         esercizi: [
                             { id: 'inst_15', esercizioId: 'def_quad_4', nome: 'Squat', serie: [{kg: 0, reps: 8, completed: false}, {kg: 0, reps: 8, completed: false}, {kg: 0, reps: 8, completed: false}], recupero: 150, note: 'Con Bilanciere' },
                             { id: 'inst_16', esercizioId: 'def_quad_3', nome: 'Leg Press', serie: [{kg: 0, reps: 12, completed: false}, {kg: 0, reps: 12, completed: false}, {kg: 0, reps: 12, completed: false}], recupero: 90, note: '' },

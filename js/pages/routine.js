@@ -59,11 +59,7 @@ function setupRoutineList(pianoId) {
                 let piani = getFromLocalStorage('pianiDiAllenamento') || [];
                 const pianoCorrente = piani.find(p => p.id === pianoId);
                 if (pianoCorrente) {
-                    // Assegna un colore fisso alla creazione per il futuro calendario
-                    const routineColors = ['#FF3B30', '#FF9500', '#FFCC00', '#34C759', '#5AC8FA', '#007AFF', '#5856D6', '#AF52DE', '#ff65a5ff'];
-                    const color = routineColors[pianoCorrente.routine.length % routineColors.length];
-                    
-                    pianoCorrente.routine.push({ id: Date.now().toString(), nome: nomeRoutine, esercizi: [], color: color });
+                    pianoCorrente.routine.push({ id: Date.now().toString(), nome: nomeRoutine, esercizi: [] });
                     saveToLocalStorage('pianiDiAllenamento', piani);
                     nomeRoutineInput.value = '';
                     if (modal) modal.style.display = "none";

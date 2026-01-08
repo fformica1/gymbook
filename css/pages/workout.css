@@ -353,6 +353,10 @@ input.set-input {
     min-height: 36px;
     padding: 8px 12px;
     line-height: 1.4;
+    background-color: transparent;
+    color: var(--text);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
 }
 
 /* --- Scroll Snap (Magnete Esercizi) --- */
